@@ -70,6 +70,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 8. 密码 BCrypt 加密，用户输入必须校验。
 9. 优先逻辑删除。
 
+## 进度管理
+- 每次开始任务时先读 `PROGRESS.md` 了解当前状态。
+- 任务完成一个阶段后，更新 `PROGRESS.md` 中的进度和决策记录。
+- 更新内容保持简洁，只写关键信息，不写大段日志。
+
 ## 输出要求
 - 中文简洁回答，只输出关键差异或代码片段。
 - 修改文件时说明文件路径和修改内容。
