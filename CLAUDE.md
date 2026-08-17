@@ -74,6 +74,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 每次开始任务时先读 `PROGRESS.md` 了解当前状态。
 - 任务完成一个阶段后，更新 `PROGRESS.md` 中的进度和决策记录。
 - 更新内容保持简洁，只写关键信息，不写大段日志。
+- 每完成一个阶段任务后，提示用户执行 `/compact` 压缩会话（该命令需用户在会话中手动触发）。
 
 ## 输出要求
 - 中文简洁回答，只输出关键差异或代码片段。
