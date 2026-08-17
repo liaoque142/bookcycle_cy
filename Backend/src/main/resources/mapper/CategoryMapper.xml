@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookcycle.mapper.CategoryMapper">
+
+    <!-- 根分类分页列表：PageHelper 在其后拼接 LIMIT -->
+    <select id="selectRootList" resultType="com.bookcycle.entity.Category">
+        SELECT id, parent_id, name, sort, status, create_time, update_time, deleted
+        FROM category
+        WHERE parent_id = 0 AND deleted = 0
+        ORDER BY sort
+    </select>
+
+</mapper>

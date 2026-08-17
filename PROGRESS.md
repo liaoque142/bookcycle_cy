@@ -11,14 +11,14 @@
 - [x] 前端路由骨架 + 导航修复（Header/Footer 抽为全局布局；新增 /books /forum /about 占位页 + 404 兜底；导航高亮随路由联动；懒加载）
 - [x] 前端 API 层 + 类型契约骨架（Result/Page/实体类型、axios 封装解包 Result、分模块 API：book/forum/auth、Pinia 登录 mock，VITE_API_MOCK 控制 mock/真实切换）
 - [x] 前端核心页面铺设（书市列表搜索/筛选/分页、书籍详情、登录/注册、发布书籍、个人中心；路由鉴权守卫 + Header 登录态接线；BookCard 接详情跳转）
-- [x] 数据库设计（sql/schema.sql 25 张表 + sql/seed.sql 初始数据：角色/分类，对齐 plan.md §7 与前端契约）
+- [x] 数据库设计（sql/schema.sql 25 张表 + sql/seed.sql 初始数据：角色/分类，对齐 plan.md §7 与前端契约）并已应用到本机 bookcycle 库（utf8mb4 验证通过）
+- [x] 后端脚手架（Spring Boot 3.5.16 + MyBatis XML Mapper + PageHelper 6.1.1，冒烟接口 GET /api/v1/categories 分页验证通过）
 
 ## 进行中
 - [ ] 后端项目初始化（Backend 目录为空，尚未开工）
 - [ ] 前端剩余页面（论坛详情、交易流程 UI、管理后台，待对应后端阶段）
 
 ## 待办（阶段一，按序）
-- [ ] 后端脚手架（Spring Boot 3 + MyBatis XML Mapper + PageHelper）
 - [ ] 注册登录 + JWT 认证（Spring Security + BCrypt，RBAC 统一账号）
 - [ ] 最小闭环：注册 → 发布书籍 → 书籍详情 → 浏览
 
@@ -29,6 +29,8 @@
 - 2026-08-17：前端 mock 先行——API 函数默认返回 mock（`VITE_API_MOCK=false` 切真实）；`Book` 保持展示用 VO 形态，后端对接返回含 categoryName/sellerName 的 VO
 - 2026-08-17：发布书籍图片暂用自动 CSS 书封（按分类取色板），不接上传；交易/收藏/订单流程属阶段三
 - 2026-08-17：数据库无物理外键、用逻辑索引；枚举存 TINYINT 码 + 注释，展示中文由后端 VO 映射；通用字段 id/create_time/update_time/deleted（纯追加表只留 id+create_time）
+- 2026-08-17：评审建议（待对应阶段执行）——书籍讨论区提前至阶段二；阶段四拆序（先论坛发帖/评论/点赞，后好友/通知）；阶段四补 seed 论坛板块数据；ForumPost 契约拆分 + 回复数聚合
+- 2026-08-17：后端 Spring Boot 3.5.16（plan.md 3.3.x 更新到 3.5.x 稳定线）；PageHelper 用独立 pagehelper 6.1.1 + MyBatis starter 3.x 自动注册 Interceptor bean（不引 pagehelper-spring-boot-starter，其面向 Boot 2）；Backend/.mvn/settings.xml 走阿里云镜像（本机直连 Maven Central 被墙，不改本机 ~/.m2）
 
 ## 阻塞/风险
 - Redis 未安装，缓存/验证码/Token 黑名单需先安装（降级方案见 plan.md 风险表）
