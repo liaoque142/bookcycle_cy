@@ -34,7 +34,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Git 规则
 - 若项目根目录无 `.git`，执行 `git init` 初始化仓库。
-- **禁止自动执行** `git add`、`git commit`、`git push`，自动提交。
+- 任务完成后自动执行 `git add` + `git commit`（自动提交）；`git push` 不自动执行，仅在用户明确要求时执行。
 - 每次任务完成后，在 `CHANGELOG.md` 中追加修改说明（日期、内容、涉及文件）。
 
 ## 代码规范
