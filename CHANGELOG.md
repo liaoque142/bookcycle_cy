@@ -7,3 +7,4 @@
 - 初始化 Frontend：Vite 8 + Vue 3 + TS + Element Plus + Pinia + Router 脚手架，创建极简白灰风完整首页（吸顶导航、Hero 书脊书架、数据条、分类导航、精选书市、最新上架、书友论坛、平台优势、Footer），书籍/帖子用 mock 数据；TypeScript 固定 5.9.x 以兼容 vue-tsc 3.x。
 - 重写 PROGRESS.md 对齐实际状态：当前阶段改为阶段一（原记录误写阶段二/已完成 JWT 与 schema.sql，实际 Backend 为空、sql/ 未创建）；补入 CLAUDE.md 进度管理、plan.md 阶段一待办与功能建议；记录 XML Mapper 决策与 plan.md 技术选型（MyBatis-Plus）不一致待同步。
 - CLAUDE.md Git 规则改为自动提交：`git add` + `git commit` + `git push` 全部自动执行；同步项目至 GitHub 私有仓库（origin=https://github.com/liaoque142/BookCycle），远端初始 README 提交经 rebase 保留。
+- 配置本机 MySQL MCP（`.mcp.json`）：使用 `@benborla29/mcp-server-mysql` v2.0.9 连接本机 MySQL 8.4.5（root@127.0.0.1:3306），密码经 `MYSQL_PASS` 环境变量引用（setx 持久化），不入库；实测连接成功，可跨库查询，现有 18 个数据库。
