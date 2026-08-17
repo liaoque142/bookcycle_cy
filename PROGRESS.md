@@ -14,12 +14,13 @@
 - [x] 数据库设计（sql/schema.sql 25 张表 + sql/seed.sql 初始数据：角色/分类，对齐 plan.md §7 与前端契约）并已应用到本机 bookcycle 库（utf8mb4 验证通过）
 - [x] 后端脚手架（Spring Boot 3.5.16 + MyBatis XML Mapper + PageHelper 6.1.1，冒烟接口 GET /api/v1/categories 分页验证通过）
 - [x] 注册登录 + JWT 认证（Spring Security + BCrypt，RBAC 统一账号；seed 管理员 admin）
+- [x] 后端 Book 模块（发布/列表/详情 + BookVO 映射：分类名/枚举中文/卖家昵称/信誉）
 
 ## 进行中
 - [ ] 前端剩余页面（论坛详情、交易流程 UI、管理后台，待对应后端阶段）
 
 ## 待办（阶段一，按序）
-- [ ] 最小闭环：注册 → 发布书籍 → 书籍详情 → 浏览
+- [ ] 最小闭环（后端已通）：前端接通真实接口（`VITE_API_MOCK=false` + 401 处理修复 + 书封色板 fallback + 入参编码映射）
 
 ## 决策记录
 - 2026-08-17：持久层用 MyBatis XML Mapper + PageHelper，不用 MyBatis-Plus（⚠️ plan.md 技术选型仍写 MyBatis-Plus，待同步修订）
@@ -32,6 +33,7 @@
 - 2026-08-17：后端 Spring Boot 3.5.16（plan.md 3.3.x 更新到 3.5.x 稳定线）；PageHelper 用独立 pagehelper 6.1.1 + MyBatis starter 3.x 自动注册 Interceptor bean（不引 pagehelper-spring-boot-starter，其面向 Boot 2）；Backend/.mvn/settings.xml 走阿里云镜像（本机直连 Maven Central 被墙，不改本机 ~/.m2）
 - 2026-08-17：认证 JWT 无状态（jjwt 0.12.6，HS256/384）；关闭 Security 表单/httpBasic/内存用户（排除 UserDetailsServiceAutoConfiguration），纯 JWT filter 写 SecurityContext；JWT 密钥走环境变量 JWT_SECRET（默认 dev 值）；注册账号复用为 sys_user.username；注册默认 user 角色；登录账号=手机号或邮箱（对齐前端 LoginResult 契约）；seed 管理员 admin（默认密码 admin123456，首次登录后修改）；全局异常补 400 请求体/404/405 错误码
 - 2026-08-17：Git Bash 会话不继承 Windows 用户环境变量 MYSQL_PASS，启动后端需内联注入（`MYSQL_PASS="$(powershell -NoProfile -Command '[Environment]::GetEnvironmentVariable("MYSQL_PASS","User")')" mvn spring-boot:run`）
+- 2026-08-17：MyBatis 映射的 VO 类**禁用 Lombok @Builder**（其全参构造器触发列顺序构造器自动映射，create_time 被按位置塞给 Long 参数报错；显式 resultMap/javaType 均无效，去 @Builder 走 setter 映射解决）；VO 枚举中文在 SQL CASE 映射；Book 接口过滤参数用编码（tradeType 1-3 / condition 1-4 / categoryId），发布需登录（JWT userId），GET 列表/详情游客可浏览（Security 放行 GET /books/**）
 
 ## 阻塞/风险
 - Redis 未安装，缓存/验证码/Token 黑名单需先安装（降级方案见 plan.md 风险表）
