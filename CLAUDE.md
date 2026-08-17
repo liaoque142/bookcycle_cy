@@ -84,6 +84,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 不确定的点先询问，不擅自猜测；复杂任务先说明计划再执行。
 
 ## 禁止事项
+- 禁止修改BookCycle以外的本机配置
 - 修改与任务无关的文件。
 - 删除或忽略已有测试。
 - 未经确认执行危险数据库操作。
