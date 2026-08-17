@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
+
+const route = useRoute()
+const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.startsWith(to))
 
 const query = ref('')
 const navs = [
@@ -25,7 +29,7 @@ const navs = [
           :key="n.name"
           :to="n.to"
           class="nav__link"
-          :class="{ 'is-active': n.to === '/' }"
+          :class="{ 'is-active': isActive(n.to) }"
         >
           {{ n.name }}
         </router-link>

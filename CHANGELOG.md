@@ -8,3 +8,4 @@
 - 重写 PROGRESS.md 对齐实际状态：当前阶段改为阶段一（原记录误写阶段二/已完成 JWT 与 schema.sql，实际 Backend 为空、sql/ 未创建）；补入 CLAUDE.md 进度管理、plan.md 阶段一待办与功能建议；记录 XML Mapper 决策与 plan.md 技术选型（MyBatis-Plus）不一致待同步。
 - CLAUDE.md Git 规则改为自动提交：`git add` + `git commit` + `git push` 全部自动执行；同步项目至 GitHub 私有仓库（origin=https://github.com/liaoque142/BookCycle），远端初始 README 提交经 rebase 保留。
 - 配置本机 MySQL MCP（`.mcp.json`）：使用 `@benborla29/mcp-server-mysql` v2.0.9 连接本机 MySQL 8.4.5（root@127.0.0.1:3306），密码经 `MYSQL_PASS` 环境变量引用（setx 持久化），不入库；实测连接成功，可跨库查询，现有 18 个数据库。
+- 前端路由骨架 + 导航修复：Header/Footer 从 `components/home/` 移至 `components/layout/` 并抽为全局布局（App.vue）；Home.vue 只保留内容区；新增 `/books` `/forum` `/about` 占位页（复用 `PagePlaceholder` 组件）与 404 兜底页，路由全部懒加载 + scrollBehavior；Header 导航高亮由写死 `n.to === '/'` 改为 `useRoute()` 随路由联动；"查看全部 →" 指向 `/books`。（涉及：App.vue、Home.vue、router/index.ts、HomeHeader/HomeFooter、HomeBookSection、新增 views/Books|Forum|About|NotFound、components/common/PagePlaceholder）

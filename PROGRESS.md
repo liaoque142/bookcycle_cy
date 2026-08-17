@@ -8,6 +8,7 @@
 - [x] CLAUDE.md 环境基线（JDK 21 / MySQL 8.4.5 / Node 24.9 / npm 11.6）+ 进度管理配置
 - [x] 前端脚手架初始化（Vite 8 + Vue 3 + TS + Element Plus + Pinia + Router）
 - [x] 前端首页（极简白灰风：导航 / Hero 书架 / 数据条 / 分类导航 / 精选书市 / 最新上架 / 论坛 / 平台优势 / Footer，mock 数据）
+- [x] 前端路由骨架 + 导航修复（Header/Footer 抽为全局布局；新增 /books /forum /about 占位页 + 404 兜底；导航高亮随路由联动；懒加载）
 
 ## 进行中
 - [ ] 后端项目初始化（Backend 目录为空，尚未开工）

@@ -1,18 +1,15 @@
 <script setup lang="ts">
-import HomeHeader from '@/components/home/HomeHeader.vue'
 import HomeHero from '@/components/home/HomeHero.vue'
 import HomeStats from '@/components/home/HomeStats.vue'
 import HomeCategories from '@/components/home/HomeCategories.vue'
 import HomeBookSection from '@/components/home/HomeBookSection.vue'
 import HomeForum from '@/components/home/HomeForum.vue'
 import HomeFeatures from '@/components/home/HomeFeatures.vue'
-import HomeFooter from '@/components/home/HomeFooter.vue'
 import { featuredBooks, latestBooks } from '@/data/books'
 import { posts } from '@/data/posts'
 </script>
 
 <template>
-  <HomeHeader />
   <main>
     <HomeHero />
     <HomeStats />
@@ -22,5 +19,4 @@ import { posts } from '@/data/posts'
     <HomeForum :posts="posts" />
     <HomeFeatures />
   </main>
-  <HomeFooter />
 </template>

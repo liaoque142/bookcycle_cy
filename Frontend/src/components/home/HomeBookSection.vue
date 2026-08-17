@@ -17,7 +17,7 @@ defineProps<{
           <h2 class="section-title">{{ title }}</h2>
           <p v-if="subtitle" class="section-sub">{{ subtitle }}</p>
         </div>
-        <a href="#" class="section-more">查看全部 →</a>
+        <router-link to="/books" class="section-more">查看全部 →</router-link>
       </div>
 
       <div class="grid">
