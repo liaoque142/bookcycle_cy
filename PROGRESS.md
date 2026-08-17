@@ -9,6 +9,7 @@
 - [x] 前端脚手架初始化（Vite 8 + Vue 3 + TS + Element Plus + Pinia + Router）
 - [x] 前端首页（极简白灰风：导航 / Hero 书架 / 数据条 / 分类导航 / 精选书市 / 最新上架 / 论坛 / 平台优势 / Footer，mock 数据）
 - [x] 前端路由骨架 + 导航修复（Header/Footer 抽为全局布局；新增 /books /forum /about 占位页 + 404 兜底；导航高亮随路由联动；懒加载）
+- [x] 前端 API 层 + 类型契约骨架（Result/Page/实体类型、axios 封装解包 Result、分模块 API：book/forum/auth、Pinia 登录 mock，VITE_API_MOCK 控制 mock/真实切换）
 
 ## 进行中
 - [ ] 后端项目初始化（Backend 目录为空，尚未开工）
@@ -23,6 +24,7 @@
 - 2026-08-17：持久层用 MyBatis XML Mapper + PageHelper，不用 MyBatis-Plus（⚠️ plan.md 技术选型仍写 MyBatis-Plus，待同步修订）
 - 2026-08-17：RBAC 统一账号（用户/管理员同走 sys_user + role，无独立 admin 表）
 - 2026-08-17：优先逻辑删除；接口前缀 /api/v1
+- 2026-08-17：前端 mock 先行——API 函数默认返回 mock（`VITE_API_MOCK=false` 切真实）；`Book` 保持展示用 VO 形态，后端对接返回含 categoryName/sellerName 的 VO
 
 ## 阻塞/风险
 - Redis 未安装，缓存/验证码/Token 黑名单需先安装（降级方案见 plan.md 风险表）

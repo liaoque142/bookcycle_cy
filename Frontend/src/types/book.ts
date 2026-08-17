@@ -35,3 +35,14 @@ export interface CategoryItem {
   icon: string
   count: string
 }
+
+/** 书市列表查询参数（plan.md §8：page, size, sort） */
+export interface BookQuery {
+  keyword?: string
+  category?: string
+  tradeType?: TradeType
+  condition?: string
+  page?: number
+  size?: number
+  sort?: string
+}
