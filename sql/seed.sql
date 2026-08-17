@@ -22,4 +22,8 @@ INSERT IGNORE INTO `category` (`id`, `parent_id`, `name`, `sort`, `status`) VALU
   (7, 0, '杂志期刊', 7, 1),
   (8, 0, '其他', 8, 1);
 
--- 管理员账号不在此 seed（BCrypt 哈希待后端认证阶段用 Spring Security 生成，避免假哈希）。
+-- 初始管理员：admin（默认密码 admin123456，首次登录后请修改；生产从环境变量注入）
+INSERT IGNORE INTO `sys_user` (`id`, `username`, `password`, `email`, `credit`, `status`, `role_id`) VALUES
+  (1, 'admin', '$2a$10$.56sbnLvTv5bywLohfLDCOgbuJ7hOcsiyBtQR4ZMNXsGUSBNhSUVi', 'admin@bookcycle.dev', 100, 1, 1);
+INSERT IGNORE INTO `user_profile` (`id`, `user_id`, `nickname`) VALUES
+  (1, 1, '管理员');
