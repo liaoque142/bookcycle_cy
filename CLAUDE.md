@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目信息
 - 项目名称：BookCycle（书循环）
-- 技术栈：Java 21 + Spring Boot 3 + Vue 3 + MySQL 8 + Redis
+- 技术栈：Java 21 + Spring Boot 3 + Vue 3 + MySQL 8 + Redis + MyBatis（XML Mapper）
 - 目录结构：
   - `Backend/` 后端 Spring Boot 项目
   - `Frontend/` 前端 Vue 3 项目
@@ -34,20 +34,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Git 规则
 - 若项目根目录无 `.git`，执行 `git init` 初始化仓库。
-- **禁止自动执行** `git add`、`git commit`、`git push`，提交由用户手动完成。
+- **禁止自动执行** `git add`、`git commit`、`git push`，自动提交。
 - 每次任务完成后，在 `CHANGELOG.md` 中追加修改说明（日期、内容、涉及文件）。
 
 ## 代码规范
 ### Java
 - 使用 Lombok，Controller 只做参数校验，业务在 Service。
 - 多表写操作必须加 `@Transactional`。
-- 使用 MyBatis-Plus，禁止 SQL 拼接。
+- 使用 MyBatis XML Mapper 编写 SQL，禁止在 Java 代码中拼接 SQL。
+- 参数使用 `#{}` 预编译占位符，禁止 `${}` 拼接用户输入，防止 SQL 注入。
+- 简单 SQL 可在 Mapper 接口用注解（`@Select` / `@Insert` / `@Update` / `@Delete`），复杂 SQL 必须写在 XML 映射文件中。
+- 分页查询统一使用 PageHelper（`PageHelper.startPage()`），禁止手动拼接 LIMIT。
 - 统一响应类 `Result<T>`，全局异常处理。
 
 ### Vue 3
 - 使用 TypeScript 和 `<script setup lang="ts">`。
 - 状态管理用 Pinia，API 封装在 `src/api/`。
 - 路由懒加载，样式 scoped。
+
+## XML Mapper 规范
+- XML 映射文件统一放在 `Backend/src/main/resources/mapper/` 目录。
+- 文件命名与 Mapper 接口一致，如 `UserMapper.xml`。
+- `namespace` 必须是 Mapper 接口的全限定名，如 `com.bookcycle.mapper.UserMapper`。
+- 每个 SQL 语句的 `id` 与接口方法名一致。
+- 数据库变更必须同步更新实体、Mapper 接口、XML 映射文件、DTO、SQL 脚本。
 
 ## 工作准则
 1. 一次只完成一个明确任务，不扩大范围。
