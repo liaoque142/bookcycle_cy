@@ -13,21 +13,23 @@ function priceLabel(book: Book): string {
 
 <template>
   <article class="card">
-    <div class="card__cover">
-      <BookCover :book="book" height="100%" />
-      <span class="card__type" :class="`card__type--${book.tradeType}`">
-        {{ priceLabel(book) }}
-      </span>
-    </div>
-
-    <div class="card__body">
-      <h3 class="card__title">{{ book.title }}</h3>
-      <p class="card__author">{{ book.author }}</p>
-      <div class="card__meta">
-        <span class="card__cond">{{ book.condition }} · {{ book.category }}</span>
-        <span class="card__credit">信誉 {{ book.credit }}</span>
+    <router-link :to="`/books/${book.id}`" class="card__link">
+      <div class="card__cover">
+        <BookCover :book="book" height="100%" />
+        <span class="card__type" :class="`card__type--${book.tradeType}`">
+          {{ priceLabel(book) }}
+        </span>
       </div>
-    </div>
+
+      <div class="card__body">
+        <h3 class="card__title">{{ book.title }}</h3>
+        <p class="card__author">{{ book.author }}</p>
+        <div class="card__meta">
+          <span class="card__cond">{{ book.condition }} · {{ book.category }}</span>
+          <span class="card__credit">信誉 {{ book.credit }}</span>
+        </div>
+      </div>
+    </router-link>
   </article>
 </template>
 
@@ -43,6 +45,11 @@ function priceLabel(book: Book): string {
   &:hover {
     box-shadow: var(--shadow-lift);
     transform: translateY(-4px);
+  }
+
+  &__link {
+    display: block;
+    height: 100%;
   }
 
   &__cover {

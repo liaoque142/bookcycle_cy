@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -15,6 +16,11 @@ const router = createRouter({
       component: () => import('@/views/Books.vue'),
     },
     {
+      path: '/books/:id',
+      name: 'book-detail',
+      component: () => import('@/views/BookDetail.vue'),
+    },
+    {
       path: '/forum',
       name: 'forum',
       component: () => import('@/views/Forum.vue'),
@@ -25,11 +31,35 @@ const router = createRouter({
       component: () => import('@/views/About.vue'),
     },
     {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/Login.vue'),
+    },
+    {
+      path: '/publish',
+      name: 'publish',
+      component: () => import('@/views/Publish.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/views/Profile.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/NotFound.vue'),
     },
   ],
+})
+
+// 鉴权守卫：受保护页未登录时重定向到登录页，并携带回跳地址
+router.beforeEach((to) => {
+  if (to.meta.requiresAuth && !useAuthStore().isLoggedIn) {
+    return { path: '/login', query: { redirect: to.fullPath } }
+  }
 })
 
 export default router

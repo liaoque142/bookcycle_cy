@@ -25,6 +25,8 @@ export const books: Book[] = [
     coverTone: '#EFEDE8',
     coverToneText: '#1A1A1A',
     createdAt: '2026-08-10',
+    publisher: '作家出版社',
+    description: '讲述福贵历经苦难跌宕的一生，余华代表作，中国当代文学经典。',
   },
   {
     id: 2,
@@ -39,6 +41,9 @@ export const books: Book[] = [
     coverTone: '#DFE1E6',
     coverToneText: '#1A1A1A',
     createdAt: '2026-08-12',
+    publisher: '重庆出版社',
+    isbn: '9787536692930',
+    description: '科幻史诗，讲述地球文明与三体文明跨越宇宙尺度的交锋。',
   },
   {
     id: 3,
@@ -53,6 +58,7 @@ export const books: Book[] = [
     coverTone: '#E4DCD2',
     coverToneText: '#1A1A1A',
     createdAt: '2026-08-09',
+    description: '魔幻现实主义经典，布恩迪亚家族七代人的兴衰与孤独宿命。',
   },
   {
     id: 4,
@@ -67,6 +73,8 @@ export const books: Book[] = [
     coverTone: '#E8E6EB',
     coverToneText: '#333333',
     createdAt: '2026-08-11',
+    publisher: '人民文学出版社',
+    description: '写给大人的童话，关于爱、责任与驯养的温暖故事。',
   },
   {
     id: 5,
@@ -81,6 +89,9 @@ export const books: Book[] = [
     coverTone: '#E6E2DB',
     coverToneText: '#1A1A1A',
     createdAt: '2026-08-13',
+    publisher: '中信出版社',
+    isbn: '9787508647357',
+    description: '从认知革命到智人统治世界，一部宏大的历史叙事。',
   },
   {
     id: 6,
@@ -95,6 +106,7 @@ export const books: Book[] = [
     coverTone: '#DBDBE0',
     coverToneText: '#1A1A1A',
     createdAt: '2026-08-08',
+    description: '东野圭吾巅峰之作，罪恶与救赎交织的漫长故事。',
   },
   {
     id: 7,
@@ -109,6 +121,7 @@ export const books: Book[] = [
     coverTone: '#EBE3D9',
     coverToneText: '#1A1A1A',
     createdAt: '2026-08-07',
+    description: '以 1587 年为切片，透视明代政治制度运转的真实肌理。',
   },
   {
     id: 8,
@@ -123,6 +136,7 @@ export const books: Book[] = [
     coverTone: '#DCE3E1',
     coverToneText: '#1A1A1A',
     createdAt: '2026-08-14',
+    description: '微软面试题精选，锻炼算法设计与工程思维。',
   },
   {
     id: 9,
@@ -137,6 +151,7 @@ export const books: Book[] = [
     coverTone: '#EFE9E1',
     coverToneText: '#1A1A1A',
     createdAt: '2026-08-15',
+    description: '孙少平兄弟的奋斗史，路遥笔下平凡人的宏大叙事。',
   },
   {
     id: 10,
@@ -151,6 +166,7 @@ export const books: Book[] = [
     coverTone: '#E3E1DC',
     coverToneText: '#1A1A1A',
     createdAt: '2026-08-15',
+    description: '钱锺书唯一长篇小说，妙喻连篇的婚姻与人生讽喻。',
   },
   {
     id: 11,
@@ -165,6 +181,7 @@ export const books: Book[] = [
     coverTone: '#E5E7E4',
     coverToneText: '#1A1A1A',
     createdAt: '2026-08-16',
+    description: '原研哉对设计本质的思考与实践记录，设计入门必读。',
   },
   {
     id: 12,
@@ -179,6 +196,7 @@ export const books: Book[] = [
     coverTone: '#E9E2D8',
     coverToneText: '#1A1A1A',
     createdAt: '2026-08-16',
+    description: '兵家圣典，流传两千余年、影响深远的谋略之书。',
   },
 ]
 

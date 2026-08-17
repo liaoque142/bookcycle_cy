@@ -18,6 +18,25 @@ export interface Book {
   /** 书封文字色 */
   coverToneText: string
   createdAt: string
+  /** 出版社 */
+  publisher?: string
+  /** ISBN */
+  isbn?: string
+  /** 描述 */
+  description: string
+}
+
+/** 发布书籍提交参数 */
+export interface PublishBookPayload {
+  title: string
+  author: string
+  isbn?: string
+  publisher?: string
+  category: string
+  price: number | null
+  tradeType: TradeType
+  condition: string
+  description: string
 }
 
 export interface ForumPost {

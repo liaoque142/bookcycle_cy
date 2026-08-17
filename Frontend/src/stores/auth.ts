@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { login as loginApi, logout as logoutApi } from '@/api/auth'
-import type { LoginParams, User } from '@/types/user'
+import { login as loginApi, register as registerApi, logout as logoutApi } from '@/api/auth'
+import type { LoginParams, RegisterParams, User } from '@/types/user'
 
 const TOKEN_KEY = 'bc_token'
 const USER_KEY = 'bc_user'
@@ -28,6 +28,12 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem(USER_KEY, JSON.stringify(result.user))
   }
 
+  /** 注册成功后自动登录 */
+  async function register(params: RegisterParams) {
+    await registerApi(params)
+    await login({ account: params.account, password: params.password })
+  }
+
   async function logout() {
     await logoutApi()
     token.value = ''
@@ -36,5 +42,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(USER_KEY)
   }
 
-  return { token, user, isLoggedIn, login, logout }
+  return { token, user, isLoggedIn, login, register, logout }
 })
