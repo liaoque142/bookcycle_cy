@@ -10,7 +10,7 @@
 
 ## 当前可运行功能
 
-> 当前为**阶段一 + 阶段二**：认证 + 最小闭环（注册 → 发布书籍 → 详情 → 浏览）+ 论坛（发帖/评论/点赞）。
+> 当前为**阶段一 + 阶段二 + 阶段三**：认证 + 最小闭环（注册 → 发布书籍 → 详情 → 浏览）+ 论坛（发帖/评论/点赞）+ 交易与信誉（下单/模拟支付/地址/互评/信誉分）。
 
 | 模块 | 功能 | 接口 / 入口 |
 |---|---|---|
@@ -18,7 +18,11 @@
 | 分类 | 根分类分页列表（游客可看） | `GET /api/v1/categories` |
 | 书籍 | 发布（需登录）/ 分页列表 / 详情（游客可看），支持关键词、分类、交易方式、新旧程度筛选与排序 | `POST /api/v1/books`、`GET /api/v1/books`、`GET /api/v1/books/{id}` |
 | 论坛 | 板块列表、帖子分页（板块/关键词过滤 + 最新/热门排序）、帖子详情、发帖/编辑/删除（仅本人）、评论、点赞/取消点赞 | `GET /api/v1/forum/boards`、`/posts`、`/posts/{id}`、`POST|PUT|DELETE /posts/{id}`、`GET /posts/{id}/comments`、`POST /comments`、`POST\|DELETE /posts/{id}/like` |
-| 前端页面 | 首页、书市列表、书籍详情、登录/注册、发布书籍、个人中心、论坛、帖子详情、关于页、404 | 前端路由（见下） |
+| 地址 | 收货地址增删改查 + 设默认（需登录，首条自动默认） | `GET\|POST /api/v1/addresses`、`PUT\|DELETE /{id}`、`PUT /{id}/default` |
+| 交易 | 下单（出售/免费赠送，邮寄/自提，CAS 防超卖）、模拟支付、卖家发货、买家确认收货、取消（已支付自动退款） | `POST /api/v1/orders`、`POST /orders/{orderNo}/pay\|ship\|confirm\|cancel`、`GET /orders`、`GET /orders/{orderNo}` |
+| 交易评价 | 订单完成后买卖双方互评（1-5 分，好评 ≥4 分给被评方信誉 +1） | `POST /orders/{orderNo}/evaluate`、`GET /orders/{orderNo}/evaluations` |
+| 信誉 | 数据驱动规则（成功交易 +2、获得好评 +1、恶意取消 -3 等，seed 7 条可配置）、变动日志 | `GET /api/v1/credit/me`、`GET /api/v1/credit/logs` |
+| 前端页面 | 首页、书市列表、书籍详情、登录/注册、发布书籍、个人中心、论坛、帖子详情、收货地址、我的订单、信誉记录、关于页、404 | 前端路由（见下） |
 
 - 前端当前**默认 mock 数据**（`Frontend/src/data/`），切真实后端：`VITE_API_MOCK=false`。
 - 后端 API 文档（Swagger）：`http://localhost:8080/swagger-ui.html`
@@ -94,4 +98,7 @@ curl -s -X POST $B/books -H "Content-Type: application/json" -d '{}'
 - **RBAC 统一账号**：用户与管理员同 `sys_user` + `role`，无独立 admin 表；JWT 携带角色编码。
 - **DB 密码不入库**：走本机环境变量 `MYSQL_PASS`；JWT 密钥走 `JWT_SECRET`（默认 dev 值）。
 - **前端真实模式契约映射**：发布/筛选入参前端中文（分类名、交易方式、新旧程度）→ 后端编码（`categoryId`/`tradeType` 1-3/`condition` 1-4）；分类字典走 `GET /categories`；后端 BookVO 无书封色板，前端按分类 fallback；401 自动清登录态并跳登录页。
+- **防超卖**：下单时书籍状态 `在售→已预订` 走 CAS（`UPDATE ... WHERE status=1`），0 行即「已被预订」；取消释放回在售，确认收货转已售出（预订/售出的书从书市列表消失）。
+- **信誉分不设上限**：初始 100，奖励（成功交易 +2、好评 +1）可高于 100，仅钳下限 0（schema 注释 0-100 为参考）；扣减规则在 `credit_rule` 表数据驱动（后台可配置启用）。
+- **Windows 应用 seed 注意**：`mysql.exe < sql/seed.sql` 需带 `--default-character-set=utf8mb4`，否则中文字段会被按 GBK 双编码入库。
 - 进度、决策与踩坑记录见 [PROGRESS.md](PROGRESS.md)；变更历史见 [CHANGELOG.md](CHANGELOG.md)。

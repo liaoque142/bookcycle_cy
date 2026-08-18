@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import BookCard from '@/components/home/BookCard.vue'
 import { useAuthStore } from '@/stores/auth'
 import { fetchBooks } from '@/api/book'
+import { fetchCreditMe } from '@/api/credit'
 import type { Book } from '@/types/book'
 
 const authStore = useAuthStore()
@@ -12,10 +13,10 @@ const myBooks = ref<Book[]>([])
 const loading = ref(true)
 
 const menuItems = [
-  { name: '我的收藏', desc: '收藏的书都在这里' },
-  { name: '收货地址', desc: '管理邮寄地址' },
-  { name: '信誉记录', desc: '查看信誉分变动' },
-  { name: '消息通知', desc: '交易与好友消息' },
+  { name: '我的订单', desc: '买入与卖出的交易', to: '/orders' },
+  { name: '收货地址', desc: '管理邮寄地址', to: '/addresses' },
+  { name: '信誉记录', desc: '查看信誉分变动', to: '/credit' },
+  { name: '消息通知', desc: '交易与好友消息', to: '' },
 ]
 
 onMounted(async () => {
@@ -25,6 +26,13 @@ onMounted(async () => {
     myBooks.value = result.list.filter((b) => b.seller === user?.nickname)
   } finally {
     loading.value = false
+  }
+  // 刷新信誉分（交易动作会改变）
+  try {
+    const credit = await fetchCreditMe()
+    if (authStore.user) authStore.user.credit = credit
+  } catch {
+    /* 非关键，忽略 */
   }
 })
 </script>
@@ -63,11 +71,20 @@ onMounted(async () => {
 
         <ul class="profile__menu">
           <li v-for="item in menuItems" :key="item.name" class="profile__menu-item">
-            <div>
-              <p class="profile__menu-name">{{ item.name }}</p>
-              <p class="profile__menu-desc">{{ item.desc }}</p>
+            <router-link v-if="item.to" :to="item.to" class="profile__menu-link">
+              <div>
+                <p class="profile__menu-name">{{ item.name }}</p>
+                <p class="profile__menu-desc">{{ item.desc }}</p>
+              </div>
+              <span class="profile__menu-badge">进入</span>
+            </router-link>
+            <div v-else class="profile__menu-link">
+              <div>
+                <p class="profile__menu-name">{{ item.name }}</p>
+                <p class="profile__menu-desc">{{ item.desc }}</p>
+              </div>
+              <span class="profile__menu-badge">开发中</span>
             </div>
-            <span class="profile__menu-badge">开发中</span>
           </li>
         </ul>
       </div>
@@ -200,17 +217,22 @@ onMounted(async () => {
 }
 
 .profile__menu-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-4) var(--sp-5);
   border-bottom: 1px solid var(--line);
-  cursor: pointer;
-  transition: background 0.2s ease;
 
   &:last-child {
     border-bottom: none;
   }
+}
+
+.profile__menu-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease;
 
   &:hover {
     background: var(--paper);

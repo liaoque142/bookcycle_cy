@@ -31,6 +31,24 @@ const router = createRouter({
       component: () => import('@/views/ForumDetail.vue'),
     },
     {
+      path: '/addresses',
+      name: 'addresses',
+      component: () => import('@/views/Address.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/orders',
+      name: 'orders',
+      component: () => import('@/views/Orders.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/credit',
+      name: 'credit',
+      component: () => import('@/views/Credit.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('@/views/About.vue'),
