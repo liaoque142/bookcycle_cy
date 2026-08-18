@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookcycle.mapper.ForumMapper">
+
+    <!-- ForumPostVO 显式映射 -->
+    <resultMap id="ForumPostVOMap" type="com.bookcycle.vo.ForumPostVO">
+        <id property="id" column="id"/>
+        <result property="boardId" column="boardId"/>
+        <result property="boardName" column="boardName"/>
+        <result property="authorId" column="authorId"/>
+        <result property="author" column="author"/>
+        <result property="title" column="title"/>
+        <result property="excerpt" column="excerpt"/>
+        <result property="content" column="content"/>
+        <result property="replyCount" column="replyCount"/>
+        <result property="likeCount" column="likeCount"/>
+        <result property="viewCount" column="viewCount"/>
+        <result property="liked" column="liked" javaType="Boolean"/>
+        <result property="createTime" column="create_time" javaType="java.time.LocalDateTime"/>
+        <result property="updateTime" column="update_time" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <!-- 帖子基础列：联表取板块名与发帖人昵称 -->
+    <sql id="postColumns">
+        SELECT p.id, p.board_id AS boardId, b.name AS boardName,
+               p.user_id AS authorId, COALESCE(up.nickname, su.username) AS author,
+               p.title, p.like_count AS likeCount, p.view_count AS viewCount,
+               p.create_time, p.update_time
+        FROM forum_post p
+        JOIN forum_board b ON p.board_id = b.id AND b.deleted = 0
+        JOIN sys_user su ON p.user_id = su.id AND su.deleted = 0
+        LEFT JOIN user_profile up ON su.id = up.user_id AND up.deleted = 0
+    </sql>
+
+    <select id="selectPostPage" resultMap="ForumPostVOMap">
+        SELECT p.id, p.board_id AS boardId, b.name AS boardName,
+               p.user_id AS authorId, COALESCE(up.nickname, su.username) AS author,
+               p.title, LEFT(p.content, 100) AS excerpt,
+               (SELECT COUNT(*) FROM forum_comment fc WHERE fc.post_id = p.id AND fc.deleted = 0) AS replyCount,
+               p.like_count AS likeCount, p.view_count AS viewCount,
+               p.create_time, p.update_time
+        FROM forum_post p
+        JOIN forum_board b ON p.board_id = b.id AND b.deleted = 0
+        JOIN sys_user su ON p.user_id = su.id AND su.deleted = 0
+        LEFT JOIN user_profile up ON su.id = up.user_id AND up.deleted = 0
+        WHERE p.deleted = 0
+        <if test="boardId != null">AND p.board_id = #{boardId}</if>
+        <if test="keyword != null and keyword != ''">
+            AND (p.title LIKE CONCAT('%', #{keyword}, '%') OR p.content LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <choose>
+            <!-- 热点：点赞数 + 回复数 -->
+            <when test="sort == 'hot'">
+                ORDER BY (p.like_count + (SELECT COUNT(*) FROM forum_comment fc WHERE fc.post_id = p.id AND fc.deleted = 0)) DESC, p.create_time DESC
+            </when>
+            <otherwise>ORDER BY p.create_time DESC</otherwise>
+        </choose>
+    </select>
+
+    <select id="selectPostById" resultMap="ForumPostVOMap">
+        SELECT p.id, p.board_id AS boardId, b.name AS boardName,
+               p.user_id AS authorId, COALESCE(up.nickname, su.username) AS author,
+               p.title, p.content,
+               (SELECT COUNT(*) FROM forum_comment fc WHERE fc.post_id = p.id AND fc.deleted = 0) AS replyCount,
+               p.like_count AS likeCount, p.view_count AS viewCount,
+               (SELECT COUNT(*) FROM forum_like fl WHERE fl.post_id = p.id AND fl.user_id = #{currentUserId}) &gt; 0 AS liked,
+               p.create_time, p.update_time
+        FROM forum_post p
+        JOIN forum_board b ON p.board_id = b.id AND b.deleted = 0
+        JOIN sys_user su ON p.user_id = su.id AND su.deleted = 0
+        LEFT JOIN user_profile up ON su.id = up.user_id AND up.deleted = 0
+        WHERE p.id = #{id} AND p.deleted = 0
+    </select>
+
+    <select id="selectComments" resultType="com.bookcycle.vo.ForumCommentVO">
+        SELECT c.id, c.post_id AS postId, c.user_id AS authorId,
+               COALESCE(up.nickname, su.username) AS author, c.content,
+               c.create_time AS createTime
+        FROM forum_comment c
+        JOIN sys_user su ON c.user_id = su.id AND su.deleted = 0
+        LEFT JOIN user_profile up ON su.id = up.user_id AND up.deleted = 0
+        WHERE c.post_id = #{postId} AND c.deleted = 0
+        ORDER BY c.create_time ASC
+    </select>
+</mapper>

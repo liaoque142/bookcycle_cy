@@ -10,14 +10,15 @@
 
 ## 当前可运行功能
 
-> 当前为**阶段一**：认证 + 最小闭环（注册 → 发布书籍 → 详情 → 浏览）。
+> 当前为**阶段一 + 阶段二**：认证 + 最小闭环（注册 → 发布书籍 → 详情 → 浏览）+ 论坛（发帖/评论/点赞）。
 
 | 模块 | 功能 | 接口 / 入口 |
 |---|---|---|
 | 认证 | 注册 / 登录 / 登出（JWT，账号=手机号或邮箱） | `POST /api/v1/auth/register\|login\|logout` |
 | 分类 | 根分类分页列表（游客可看） | `GET /api/v1/categories` |
 | 书籍 | 发布（需登录）/ 分页列表 / 详情（游客可看），支持关键词、分类、交易方式、新旧程度筛选与排序 | `POST /api/v1/books`、`GET /api/v1/books`、`GET /api/v1/books/{id}` |
-| 前端页面 | 首页、书市列表、书籍详情、登录/注册、发布书籍、个人中心、论坛/关于占位页、404 | 前端路由（见下） |
+| 论坛 | 板块列表、帖子分页（板块/关键词过滤 + 最新/热门排序）、帖子详情、发帖/编辑/删除（仅本人）、评论、点赞/取消点赞 | `GET /api/v1/forum/boards`、`/posts`、`/posts/{id}`、`POST|PUT|DELETE /posts/{id}`、`GET /posts/{id}/comments`、`POST /comments`、`POST\|DELETE /posts/{id}/like` |
+| 前端页面 | 首页、书市列表、书籍详情、登录/注册、发布书籍、个人中心、论坛、帖子详情、关于页、404 | 前端路由（见下） |
 
 - 前端当前**默认 mock 数据**（`Frontend/src/data/`），切真实后端：`VITE_API_MOCK=false`。
 - 后端 API 文档（Swagger）：`http://localhost:8080/swagger-ui.html`

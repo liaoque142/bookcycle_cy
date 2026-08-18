@@ -20,4 +20,13 @@ public final class SecurityUtils {
         }
         throw new BusinessException(401, "未登录");
     }
+
+    /** 当前登录用户 ID（未登录返回 null，供游客可看的接口判断是否已赞等） */
+    public static Long currentUserIdOrNull() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof Long userId) {
+            return userId;
+        }
+        return null;
+    }
 }

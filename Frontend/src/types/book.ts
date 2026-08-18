@@ -39,16 +39,6 @@ export interface PublishBookPayload {
   description: string
 }
 
-export interface ForumPost {
-  id: number
-  title: string
-  board: string
-  author: string
-  replies: number
-  likes: number
-  excerpt: string
-}
-
 export interface CategoryItem {
   name: string
   icon: string

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ChatLineRound } from '@element-plus/icons-vue'
-import type { ForumPost } from '@/types/book'
+import type { ForumPostItem } from '@/types/forum'
 
-defineProps<{ posts: ForumPost[] }>()
+defineProps<{ posts: ForumPostItem[] }>()
 </script>
 
 <template>
@@ -12,16 +12,16 @@ defineProps<{ posts: ForumPost[] }>()
         <div class="forum__head">
           <h2 class="section-title">书友论坛</h2>
           <p class="section-sub">读书心得 · 书评 · 闲置交流</p>
-          <el-button size="large" round class="forum__btn">进入论坛</el-button>
+          <router-link to="/forum" class="forum__btn">进入论坛</router-link>
         </div>
 
         <ul class="posts">
           <li v-for="p in posts" :key="p.id" class="posts__row">
-            <span class="posts__board">{{ p.board }}</span>
-            <a href="#" class="posts__title">{{ p.title }}</a>
+            <span class="posts__board">{{ p.boardName }}</span>
+            <router-link :to="`/forum/posts/${p.id}`" class="posts__title">{{ p.title }}</router-link>
             <span class="posts__by">{{ p.author }}</span>
             <span class="posts__stat">
-              <el-icon><ChatLineRound /></el-icon>{{ p.replies }}
+              <el-icon><ChatLineRound /></el-icon>{{ p.replyCount }}
             </span>
           </li>
         </ul>
@@ -49,7 +49,18 @@ defineProps<{ posts: ForumPost[] }>()
   }
 
   &__btn {
+    display: inline-block;
     margin-top: var(--sp-5);
+    padding: 10px 24px;
+    border: 1px solid var(--line-strong, rgba(0, 0, 0, 0.12));
+    border-radius: 999px;
+    font-size: 0.92rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: var(--mark);
+      color: var(--mark);
+    }
   }
 }
 

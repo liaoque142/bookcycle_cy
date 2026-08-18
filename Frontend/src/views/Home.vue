@@ -8,19 +8,20 @@ import HomeForum from '@/components/home/HomeForum.vue'
 import HomeFeatures from '@/components/home/HomeFeatures.vue'
 import { fetchFeaturedBooks, fetchLatestBooks } from '@/api/book'
 import { fetchForumPosts } from '@/api/forum'
-import type { Book, ForumPost } from '@/types/book'
+import type { Book } from '@/types/book'
+import type { ForumPostItem } from '@/types/forum'
 
 const featuredBooks = ref<Book[]>([])
 const latestBooks = ref<Book[]>([])
-const posts = ref<ForumPost[]>([])
+const posts = ref<ForumPostItem[]>([])
 
 onMounted(async () => {
   const [f, l] = await Promise.all([fetchFeaturedBooks(), fetchLatestBooks()])
   featuredBooks.value = f
   latestBooks.value = l
   // 论坛后端阶段二实现，真实模式暂时可能失败，不拖垮首页
-  fetchForumPosts()
-    .then((p) => (posts.value = p))
+  fetchForumPosts({ page: 1, size: 5 })
+    .then((p) => (posts.value = p.list))
     .catch(() => {
       posts.value = []
     })
