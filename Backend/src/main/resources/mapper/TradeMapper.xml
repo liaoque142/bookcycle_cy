@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookcycle.mapper.TradeMapper">
+
+    <!-- OrderVO 显式映射（枚举码在 SQL 映射为中文；时间列显式 javaType） -->
+    <resultMap id="OrderVOMap" type="com.bookcycle.vo.OrderVO">
+        <id property="id" column="id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="bookId" column="bookId"/>
+        <result property="bookTitle" column="bookTitle"/>
+        <result property="buyerId" column="buyerId"/>
+        <result property="buyerName" column="buyerName"/>
+        <result property="sellerId" column="sellerId"/>
+        <result property="sellerName" column="sellerName"/>
+        <result property="amount" column="amount"/>
+        <result property="tradeType" column="tradeType"/>
+        <result property="tradeTypeCode" column="tradeTypeCode"/>
+        <result property="shipType" column="shipType"/>
+        <result property="shipTypeCode" column="shipTypeCode"/>
+        <result property="status" column="statusText"/>
+        <result property="statusCode" column="statusCode"/>
+        <result property="receiverName" column="receiverName"/>
+        <result property="receiverPhone" column="receiverPhone"/>
+        <result property="receiverAddress" column="receiverAddress"/>
+        <result property="cancelReason" column="cancelReason"/>
+        <result property="payStatus" column="payStatus"/>
+        <result property="payTime" column="payTime" javaType="java.time.LocalDateTime"/>
+        <result property="evaluatedByMe" column="evaluatedByMe"/>
+        <result property="createTime" column="create_time" javaType="java.time.LocalDateTime"/>
+        <result property="updateTime" column="update_time" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <!-- 订单 VO 列：联表 书/买卖双方(昵称缺省回退 username)/地址/支付，评估是否已评价 -->
+    <sql id="orderVoColumns">
+        SELECT o.id, o.order_no, o.book_id AS bookId, b.title AS bookTitle,
+               o.buyer_id AS buyerId, COALESCE(bup.nickname, bu.username) AS buyerName,
+               o.seller_id AS sellerId, COALESCE(sup.nickname, su.username) AS sellerName,
+               o.amount, o.trade_type AS tradeTypeCode,
+               CASE o.trade_type WHEN 1 THEN '出售' WHEN 2 THEN '赠送' WHEN 3 THEN '交换' END AS tradeType,
+               o.ship_type AS shipTypeCode,
+               CASE o.ship_type WHEN 1 THEN '邮寄' WHEN 2 THEN '自提' END AS shipType,
+               o.status AS statusCode,
+               CASE o.status WHEN 1 THEN '待支付' WHEN 2 THEN '待发货' WHEN 3 THEN '待收货'
+                             WHEN 4 THEN '已完成' WHEN 5 THEN '已取消' WHEN 6 THEN '售后中' END AS statusText,
+               a.receiver_name AS receiverName, a.phone AS receiverPhone,
+               CONCAT(a.province, a.city, a.district, a.detail) AS receiverAddress,
+               o.cancel_reason AS cancelReason,
+               p.pay_status AS payStatus, p.pay_time AS payTime,
+               o.create_time, o.update_time,
+               (SELECT COUNT(*) FROM trade_evaluation te
+                 WHERE te.order_id = o.id AND te.evaluator_id = #{currentUserId}) &gt; 0 AS evaluatedByMe
+        FROM trade_order o
+        JOIN book b ON o.book_id = b.id AND b.deleted = 0
+        JOIN sys_user bu ON o.buyer_id = bu.id AND bu.deleted = 0
+        LEFT JOIN user_profile bup ON bu.id = bup.user_id AND bup.deleted = 0
+        JOIN sys_user su ON o.seller_id = su.id AND su.deleted = 0
+        LEFT JOIN user_profile sup ON su.id = sup.user_id AND sup.deleted = 0
+        LEFT JOIN address a ON o.address_id = a.id AND a.deleted = 0
+        LEFT JOIN payment p ON p.order_id = o.id
+        WHERE o.deleted = 0
+    </sql>
+
+    <select id="selectOrderVO" resultMap="OrderVOMap">
+        <include refid="orderVoColumns"/>
+        AND o.order_no = #{orderNo}
+    </select>
+
+    <select id="selectOrderPage" resultMap="OrderVOMap">
+        <include refid="orderVoColumns"/>
+        <choose>
+            <when test="role == 'seller'">AND o.seller_id = #{userId}</when>
+            <otherwise>AND o.buyer_id = #{userId}</otherwise>
+        </choose>
+        <if test="status != null">AND o.status = #{status}</if>
+        ORDER BY o.create_time DESC
+    </select>
+</mapper>

@@ -5,6 +5,8 @@ import com.bookcycle.vo.BookVO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -26,4 +28,12 @@ public interface BookMapper {
                             @Param("tradeType") Integer tradeType,
                             @Param("condition") Integer condition,
                             @Param("sort") String sort);
+
+    /** 书籍实体（订单服务需要数值枚举/售价/卖家，而非中文 VO） */
+    @Select("SELECT * FROM book WHERE id = #{id} AND deleted = 0")
+    Book selectEntityById(@Param("id") Long id);
+
+    /** 书籍状态 CAS 原子变更（防超卖：在售→已预订 / 已预订→在售 / 已预订→已售出） */
+    @Update("UPDATE book SET status = #{to} WHERE id = #{id} AND status = #{from}")
+    int updateStatusIfEquals(@Param("id") Long id, @Param("from") Integer from, @Param("to") Integer to);
 }

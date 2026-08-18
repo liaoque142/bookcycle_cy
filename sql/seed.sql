@@ -39,3 +39,13 @@ INSERT IGNORE INTO `forum_board` (`id`, `name`, `description`, `sort`, `status`)
 INSERT IGNORE INTO `forum_post` (`id`, `board_id`, `user_id`, `title`, `content`, `like_count`, `view_count`) VALUES
   (1, 1, 1, '欢迎来到书循环论坛', '在这里分享读书心得、推荐好书，也可以交流二手书流通经验。让每一本书，都继续它的旅程。', 0, 0),
   (2, 3, 1, '二手教材怎么定价才不亏？', '卖教材怕挂高没人问、挂低心疼。聊聊常见定价思路：参考新书价 3-5 折、看内页笔记多少、学期初需求旺。', 0, 0);
+
+-- 信誉规则（阶段三，数据驱动；status 0=禁用，后台可配置启用）
+INSERT IGNORE INTO `credit_rule` (`id`, `rule_code`, `name`, `trigger_condition`, `change_value`, `priority`, `status`) VALUES
+  (1, 'TRADE_SUCCESS', '成功交易', '一笔订单确认收货后，买卖双方各 +2', 2, 1, 1),
+  (2, 'GOOD_REVIEW', '获得好评', '收到 4 分及以上评价，被评价方 +1', 1, 2, 1),
+  (3, 'MALICIOUS_CANCEL', '恶意取消订单', '买家在待发货状态下取消订单', -3, 3, 1),
+  (4, 'LATE_SHIP', '超时未发货', '卖家超过约定时间未发货', -5, 4, 0),
+  (5, 'FAKE_DESCRIPTION', '虚假描述', '书籍与描述不符且被证实', -10, 5, 0),
+  (6, 'VIOLATION', '违规行为', '刷单/诈骗等被证实违规', -10, 6, 0),
+  (7, 'BUYER_NO_PAY', '买家超时未付款', '买家超时未完成支付', -3, 7, 0);

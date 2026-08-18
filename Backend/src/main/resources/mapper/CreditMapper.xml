@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookcycle.mapper.CreditMapper">
+
+    <!-- 信誉变动日志（分页由 PageHelper 接管） -->
+    <select id="selectLogs" resultType="com.bookcycle.vo.CreditLogVO">
+        SELECT change_value AS changeValue, reason, create_time AS createTime
+        FROM credit_log
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC
+    </select>
+</mapper>
