@@ -1,7 +1,7 @@
 # 项目进度
 
 ## 当前阶段
-阶段三：交易与信誉（后端 + 前端已完成，收尾中）
+阶段四：社交（后端 + 前端已完成，收尾中）
 
 ## 已完成
 - [x] 需求整合修订（plan.md：7 阶段划分、补 6 张表、信誉规则改数据驱动、错误码规范）
@@ -18,15 +18,16 @@
 - [x] 最小闭环前端接通真实接口（`VITE_API_MOCK=false`）：后端补 `/books/featured`、`/books/latest` 只读接口；前端入参编码映射（分类名→categoryId、tradeType/condition 中文→码）、分类字典 api/category.ts、BookCover 按分类色板 fallback、401 跳登录页、vite dev 代理 `/api/v1`→8080；冒烟全链路（注册/登录/发布/精选/最新/筛选/详情/401/游客放行）通过
 - [x] 阶段二论坛模块（后端 + 前端）：forum_board/post/comment/like 四表已落地（schema 原建）；后端 9 个接口（板块/列表/详情/发帖/编辑/删除/评论/点赞，点赞幂等 + @Transactional 同步 forum_like 与 like_count，回复数相关子查询聚合 forum_comment，GET /forum/** 游客放行）；seed 补 4 板块 + 2 条管理员示例帖；前端 types/forum.ts 契约 + api/forum.ts 全接口 + Forum.vue 论坛页（板块 Tab/搜索/latest-hot/分页/发帖弹窗）+ ForumDetail.vue（详情/点赞/评论/编辑/删除）+ 路由 /forum/posts/:id + HomeForum 适配；冒烟（游客/发帖/点赞幂等/取消/评论/编辑/删除/越权 403/无 token 401）+ 经 vite 代理 E2E 全通过，mvn test 与 vue-tsc/vite build 通过
 - [x] 阶段三交易与信誉（后端 + 前端）：地址 CRUD + 设默认（首条自动默认）；下单（出售/赠送、邮寄/自提，书籍状态 CAS 在售→已预订防超卖，信誉 <40 冻结 / <60 禁购买）；模拟支付写 payment；取消释放书籍 + 已支付自动模拟退款 + 买家待发货取消扣 MALICIOUS_CANCEL -3；发货/确认收货（书转已售出、双方 TRADE_SUCCESS +2）；互评（uk 幂等、好评 ≥4 分 GOOD_REVIEW +1）；credit_rule 数据驱动（seed 7 条）+ credit_log 日志 + /credit/me、/credit/logs；前端 Address/Orders/Credit 三页 + 路由 + BookDetail 下单流（选地址/自提/模拟支付）+ Profile 接线；冒烟（防超卖/支付/发货/收货/互评幂等/信誉增减/取消扣分/退款/越权 403/401）+ 经 vite 代理 E2E 全通过，mvn test 与 vue-tsc/vite build 通过，冒烟数据已清理
+- [x] 阶段四社交（后端 + 前端）：用户搜索 `GET /friends/search`；好友 `GET /friends`、`POST /friends/requests`（幂等：已是好友/待处理申请/双向拉黑拦截）、`GET /friends/requests`、`PUT /requests/{id}`（accept 双向 upsert friend、reject）、`DELETE /friends/{userId}`（双向 status=0）；黑名单 `GET|POST /api/v1/blacklist`、`DELETE /{userId}`（拉黑自动解除好友、INSERT IGNORE 幂等，双向阻断好友申请 + 下单）；书籍讨论 `GET|POST /api/v1/books/{id}/discussions`（游客可看、树组装）、`DELETE /{id}`（本人或书作者）；通知 `GET /api/v1/notifications`（分页/unreadOnly/typeName CASE）、`GET /unread-count`、`PUT /{id}/read`、`PUT /read-all`，交易全流程 + 好友申请触发（type 2/3）；前端 Friends/Notifications 页 + 路由、BookDetail 讨论区、HomeHeader 铃铛红点（30s 轮询）+ 下拉入口、Profile 菜单接通；冒烟 33 项全通过 + vue-tsc/build + 经 vite 代理 E2E 通过，冒烟数据已清理
 
 ## 进行中
-- [ ] 阶段三收尾：浏览器真实模式体验（localhost:5173，后端 8080 已在跑）→ 阶段四（社交：好友/拉黑/书籍讨论区/通知）
+- [ ] 阶段四收尾：浏览器真实模式体验（localhost:5173 + 后端 8080 均在跑）→ 阶段五（管理后台）
 
 ## 待办（阶段一，按序）
 - [x] 最小闭环（认证 + Book）：后端 + 前端接通真实接口均完成
 - [x] 阶段二：论坛模块（发帖/评论/点赞，板块 seed 数据），按评审建议「书籍讨论区提前至阶段二」——已完成后端 + 前端
 - [x] 阶段三：交易与信誉（出售/赠送订单流程、模拟支付、防超卖 CAS、信誉评分规则、地址管理）——已完成后端 + 前端
-- [ ] 阶段四：社交（好友管理、拉黑、书籍讨论区、消息通知）
+- [x] 阶段四：社交（好友管理、拉黑、书籍讨论区、消息通知）——已完成后端 + 前端
 
 ## 决策记录
 - 2026-08-17：持久层用 MyBatis XML Mapper + PageHelper，不用 MyBatis-Plus（⚠️ plan.md 技术选型仍写 MyBatis-Plus，待同步修订）
@@ -42,6 +43,7 @@
 - 2026-08-17：MyBatis 映射的 VO 类**禁用 Lombok @Builder**（其全参构造器触发列顺序构造器自动映射，create_time 被按位置塞给 Long 参数报错；显式 resultMap/javaType 均无效，去 @Builder 走 setter 映射解决）；VO 枚举中文在 SQL CASE 映射；Book 接口过滤参数用编码（tradeType 1-3 / condition 1-4 / categoryId），发布需登录（JWT userId），GET 列表/详情游客可浏览（Security 放行 GET /books/**）
 - 2026-08-18：论坛模块设计——回复数**不做冗余列**，列表/详情用相关子查询聚合 `forum_comment`（PageHelper count 无 GROUP BY 不冲突）；`like_count` 冗余列与 `forum_like` 在 `@Transactional` 内同步（先写 forum_like 唯一索引，重复点赞 catch DuplicateKeyException 幂等返回，取消用 `GREATEST(like_count-1,0)` 防负）；hot 排序按 `like_count + 回复数` 倒序（MySQL 支持 ORDER BY 引用 select 别名）；点赞/编辑/删除需登录，帖子所有权校验本人否则 403，`GET /forum/**` 游客放行；发帖人昵称缺省回退 username（`COALESCE(up.nickname, su.username)`）；板块 seed 对齐前端 mock（读书心得/书评/闲置交流/求助问答）
 - 2026-08-18：交易与信誉设计——订单号 `BC+yyyyMMddHHmmssSSS+6位随机`（≤32 字符）；**防超卖**用书籍状态 CAS `UPDATE book SET status=2 WHERE id=? AND status=1`（0 行即已被他人预订），取消 2→1 释放回在售、确认收货 2→3 已售出；出售下单待支付、赠送下单金额 0 直接待发货；取消仅限待支付/待发货（已支付自动置 payment 已退款 + 释放书籍，买家待发货取消触发 MALICIOUS_CANCEL -3、卖家取消不扣）；评价需订单已完成、每人每单一次（uk_order_evaluator），好评 ≥4 分触发 GOOD_REVIEW +1；**信誉分钳制踩坑**：`LEAST(GREATEST(credit+delta,0),100)` 方向写反导致加成永远封顶 100，改为仅 `GREATEST(credit+delta,0)` 钳下限（奖励可高于初始 100，schema 注释 0-100 为参考）；下单信誉阈值：<40 冻结、<60 且出售禁买。**⚠️ Windows mysql 客户端 `mysql < seed.sql` 不带 `--default-character-set=utf8mb4` 会把中文按 GBK 双编码入库**（credit_rule 名称曾因此乱码），应用 seed 必须带该参数
+- 2026-08-19：社交设计——好友关系**双向各一行**（uk(user_id,friend_id) 允许 A,B 与 B,A 并存），建立用 `INSERT ... ON DUPLICATE KEY UPDATE status=1`（逻辑删除的旧行可恢复），删除双向 `UPDATE status=0`；好友申请仅新增（历史留痕），重复待处理申请幂等拦截，已同意/已是好友/双向拉黑均拦截；黑名单**双向阻断**（任一方向拉黑即拦截好友申请与下单，countBlackBetween 在 FriendService.sendRequest + TradeService.createOrder 校验），拉黑自动解除双方好友；通知 type 1系统/2交易/3好友，交易全流程触发（下单/支付/发货/收货/取消/评价），NotificationService 供各模块调用；书籍讨论顶级 + 子回复**分两次查询 Service 端按 parentId 组装**（避免 XML collection 嵌套映射）；搜索接口手写 LIMIT 20（业务上限非分页）。**⚠️ 冒烟断言坑：BusinessException 走 HTTP 200 + Result.code（GlobalExceptionHandler 不设 HTTP 状态码），断言用 body.code 而非 HTTP 状态；逻辑删除 user_profile 后 uk_nickname 唯一索引仍被旧行占用导致同名昵称重注册事务回滚，冒烟昵称需唯一后缀或清理用物理删除**
 
 ## 阻塞/风险
 - Redis 未安装，缓存/验证码/Token 黑名单需先安装（降级方案见 plan.md 风险表）

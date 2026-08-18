@@ -7,10 +7,12 @@ import BookCover from '@/components/common/BookCover.vue'
 import { fetchBookById } from '@/api/book'
 import { fetchAddresses } from '@/api/address'
 import { createOrder, payOrder } from '@/api/order'
+import { fetchDiscussions, createDiscussion, deleteDiscussion } from '@/api/discussion'
 import { useAuthStore } from '@/stores/auth'
 import type { Book } from '@/types/book'
 import type { Address } from '@/types/address'
 import type { Order } from '@/types/trade'
+import type { DiscussionItem } from '@/types/discussion'
 
 const route = useRoute()
 const router = useRouter()
@@ -108,10 +110,104 @@ function onFavorite() {
   ElMessage.success(favorite.value ? '已加入收藏' : '已取消收藏')
 }
 
+// ---- 书籍讨论区 ----
+const discussions = ref<DiscussionItem[]>([])
+const discLoading = ref(false)
+const draft = ref('')
+const replyTo = ref<number | null>(null)
+const replyDraft = ref('')
+const submitting = ref(false)
+
+function currentUserId() {
+  return authStore.isLoggedIn ? authStore.user?.id : undefined
+}
+
+/** 删除按钮：仅评论者本人可见（书籍作者后端同样允许） */
+function canDelete(d: DiscussionItem) {
+  return !!currentUserId() && d.userId === currentUserId()
+}
+
+async function loadDiscussions() {
+  if (!book.value) return
+  discLoading.value = true
+  try {
+    discussions.value = await fetchDiscussions(book.value.id)
+  } finally {
+    discLoading.value = false
+  }
+}
+
+function requireLogin(): boolean {
+  if (!authStore.isLoggedIn) {
+    router.push({ path: '/login', query: { redirect: route.fullPath } })
+    return false
+  }
+  return true
+}
+
+async function submitTop() {
+  if (!book.value || !requireLogin()) return
+  const content = draft.value.trim()
+  if (!content) {
+    ElMessage.warning('请输入评论内容')
+    return
+  }
+  submitting.value = true
+  try {
+    await createDiscussion(book.value.id, { content })
+    draft.value = ''
+    ElMessage.success('评论已发布')
+    loadDiscussions()
+  } catch (e) {
+    ElMessage.error((e as Error).message || '发布失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+function openReply(d: DiscussionItem) {
+  if (!requireLogin()) return
+  replyTo.value = replyTo.value === d.id ? null : d.id
+  replyDraft.value = ''
+}
+
+async function submitReply(d: DiscussionItem) {
+  if (!book.value) return
+  const content = replyDraft.value.trim()
+  if (!content) {
+    ElMessage.warning('请输入回复内容')
+    return
+  }
+  submitting.value = true
+  try {
+    await createDiscussion(book.value.id, { content, parentId: d.id })
+    replyTo.value = null
+    replyDraft.value = ''
+    ElMessage.success('回复成功')
+    loadDiscussions()
+  } catch (e) {
+    ElMessage.error((e as Error).message || '回复失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function onDelete(d: DiscussionItem) {
+  if (!book.value) return
+  try {
+    await deleteDiscussion(book.value.id, d.id)
+    ElMessage.success('已删除')
+    loadDiscussions()
+  } catch (e) {
+    ElMessage.error((e as Error).message || '删除失败')
+  }
+}
+
 onMounted(async () => {
   const id = Number(route.params.id)
   try {
     book.value = await fetchBookById(id)
+    loadDiscussions()
   } catch {
     notFound.value = true
   } finally {
@@ -192,6 +288,52 @@ onMounted(async () => {
         <div v-else-if="notFound" class="detail__none">
           <h2 class="detail__none-title">书籍不存在或已下架</h2>
           <router-link to="/books" class="detail__none-back">返回书市</router-link>
+        </div>
+      </div>
+
+      <!-- 书籍讨论区 -->
+      <div v-if="book && !notFound" class="discuss">
+        <div class="discuss__head">
+          <h2 class="discuss__title">书籍讨论</h2>
+          <span class="discuss__count">{{ discussions.length }} 条</span>
+        </div>
+
+        <div class="discuss__editor">
+          <el-input v-model="draft" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="写点什么，让书友更了解这本书…" />
+          <div class="discuss__editor-foot">
+            <el-button type="primary" round :loading="submitting" @click="submitTop">发表评论</el-button>
+          </div>
+        </div>
+
+        <div v-loading="discLoading" class="discuss__list">
+          <div v-if="discussions.length" class="discuss__items">
+            <div v-for="d in discussions" :key="d.id" class="discuss__item">
+              <div class="discuss__item-head">
+                <span class="discuss__author">{{ d.author }}</span>
+                <span class="discuss__time">{{ d.createTime.slice(0, 10) }}</span>
+                <el-button v-if="canDelete(d)" class="discuss__del" size="small" text type="danger" @click="onDelete(d)">删除</el-button>
+              </div>
+              <p class="discuss__content">{{ d.content }}</p>
+              <button class="discuss__reply-btn" @click="openReply(d)">{{ replyTo === d.id ? '收起回复' : '回复' }}</button>
+
+              <div v-if="replyTo === d.id" class="discuss__reply-editor">
+                <el-input v-model="replyDraft" type="textarea" :rows="2" maxlength="500" :placeholder="`回复 @${d.author}`" />
+                <el-button type="primary" size="small" round :loading="submitting" @click="submitReply(d)">回复</el-button>
+              </div>
+
+              <div v-if="d.replies.length" class="discuss__replies">
+                <div v-for="r in d.replies" :key="r.id" class="discuss__reply">
+                  <div class="discuss__reply-head">
+                    <span class="discuss__author">{{ r.author }}</span>
+                    <span class="discuss__time">{{ r.createTime.slice(0, 10) }}</span>
+                    <el-button v-if="canDelete(r)" class="discuss__del" size="small" text type="danger" @click="onDelete(r)">删除</el-button>
+                  </div>
+                  <p class="discuss__content discuss__content--reply">{{ r.content }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else-if="!discLoading" class="discuss__empty">还没有讨论，来抢沙发</div>
         </div>
       </div>
     </div>
@@ -469,6 +611,129 @@ onMounted(async () => {
   &__tip {
     margin-top: var(--sp-3);
     font-size: 0.8rem;
+    color: var(--muted);
+  }
+}
+
+.discuss {
+  margin-top: var(--sp-7);
+  max-width: 860px;
+
+  &__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-4);
+  }
+
+  &__title {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
+  &__count {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  &__editor {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: var(--sp-4);
+    margin-bottom: var(--sp-5);
+
+    &-foot {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: var(--sp-3);
+    }
+  }
+
+  &__list {
+    min-height: 80px;
+  }
+
+  &__item {
+    padding: var(--sp-4) var(--sp-5);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: var(--sp-3);
+  }
+
+  &__item-head,
+  &__reply-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+
+  &__author {
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+
+  &__time {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  &__del {
+    margin-left: auto;
+  }
+
+  &__content {
+    margin-top: var(--sp-2);
+    line-height: 1.7;
+    font-size: 0.95rem;
+
+    &--reply {
+      margin-top: 0;
+      font-size: 0.9rem;
+    }
+  }
+
+  &__reply-btn {
+    margin-top: var(--sp-2);
+    font-size: 0.82rem;
+    color: var(--muted);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--mark);
+    }
+  }
+
+  &__reply-editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin-top: var(--sp-3);
+    padding: var(--sp-3);
+    background: var(--paper);
+    border-radius: var(--radius);
+  }
+
+  &__replies {
+    margin-top: var(--sp-3);
+    padding-left: var(--sp-5);
+    border-left: 2px solid var(--line);
+  }
+
+  &__reply {
+    padding: var(--sp-3) 0;
+    border-bottom: 1px dashed var(--line);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__empty {
+    text-align: center;
+    padding: var(--sp-7) 0;
     color: var(--muted);
   }
 }

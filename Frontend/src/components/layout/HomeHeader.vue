@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, ArrowDown } from '@element-plus/icons-vue'
+import { Search, ArrowDown, Bell } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
+import { fetchUnreadCount } from '@/api/notification'
 
 const route = useRoute()
 const router = useRouter()
@@ -11,9 +12,40 @@ const authStore = useAuthStore()
 const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.startsWith(to))
 
 const query = ref('')
+const unreadCount = ref(0)
+let unreadTimer: ReturnType<typeof setInterval> | undefined
+
+async function refreshUnread() {
+  if (!authStore.isLoggedIn) {
+    unreadCount.value = 0
+    return
+  }
+  try {
+    unreadCount.value = await fetchUnreadCount()
+  } catch {
+    /* 非关键，忽略 */
+  }
+}
+
+watch(
+  () => authStore.isLoggedIn,
+  (v) => {
+    if (v) refreshUnread()
+    else unreadCount.value = 0
+  },
+)
+
+onMounted(() => {
+  refreshUnread()
+  unreadTimer = setInterval(refreshUnread, 30000)
+})
+onUnmounted(() => {
+  if (unreadTimer) clearInterval(unreadTimer)
+})
 
 async function onLogout() {
   await authStore.logout()
+  unreadCount.value = 0
   ElMessage.success('已退出登录')
   if (route.path === '/profile' || route.path === '/publish') router.push('/')
 }
@@ -58,6 +90,10 @@ const navs = [
           :prefix-icon="Search"
           clearable
         />
+        <router-link v-if="authStore.isLoggedIn" to="/notifications" class="bell" :title="unreadCount ? `${unreadCount} 条未读` : '消息通知'">
+          <el-icon :size="20"><Bell /></el-icon>
+          <span v-if="unreadCount" class="bell__badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+        </router-link>
         <router-link v-if="!authStore.isLoggedIn" to="/login" class="login-btn">
           <el-button type="primary" round>登录 / 注册</el-button>
         </router-link>
@@ -70,6 +106,8 @@ const navs = [
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+              <el-dropdown-item command="friends">我的好友</el-dropdown-item>
+              <el-dropdown-item command="notifications">消息通知</el-dropdown-item>
               <el-dropdown-item command="publish">发布书籍</el-dropdown-item>
               <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
@@ -188,6 +226,38 @@ const navs = [
 
 .login-btn {
   flex-shrink: 0;
+}
+
+.bell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--muted);
+  transition: background 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  &__badge {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #d9534f;
+    color: #fff;
+    font-size: 0.68rem;
+    line-height: 16px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 .user-btn {
