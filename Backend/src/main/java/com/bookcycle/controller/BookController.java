@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * 书籍接口：发布（需登录）/ 列表 / 详情（游客可浏览）。
  */
@@ -52,5 +54,17 @@ public class BookController {
     @GetMapping("/{id}")
     public Result<BookVO> detail(@PathVariable Long id) {
         return Result.ok(bookService.detail(id));
+    }
+
+    /** 首页精选：高信誉卖家在售书（固定 top N，游客可看） */
+    @GetMapping("/featured")
+    public Result<List<BookVO>> featured(@RequestParam(defaultValue = "8") @Min(1) @Max(50) int size) {
+        return Result.ok(bookService.featured(size));
+    }
+
+    /** 首页最新上架：最新在售书（固定 top N，游客可看） */
+    @GetMapping("/latest")
+    public Result<List<BookVO>> latest(@RequestParam(defaultValue = "8") @Min(1) @Max(50) int size) {
+        return Result.ok(bookService.latest(size));
     }
 }

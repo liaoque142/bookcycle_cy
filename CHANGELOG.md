@@ -1,5 +1,8 @@
 # 变更日志
 
+## 2026-08-18
+- 阶段一最小闭环前端接通真实接口（`VITE_API_MOCK=false`）。后端新增首页只读接口：`GET /api/v1/books/featured`（高信誉卖家在售书 top N，复用 list 排序新增 `sort=credit`）、`GET /api/v1/books/latest`（最新在售书 top N），Security 已放行 GET /books/** 游客可看；冒烟验证（注册/登录/发布/精选/最新/关键词/编码筛选/详情/无 token 401/游客放行）全通过。前端：新增 `api/category.ts` 分类字典（真实模式拉 GET /categories，mock 用静态数据 id 与 seed 一致）；`api/book.ts` 入参映射（分类名→categoryId、tradeType/condition 中文→编码）；`BookCover.vue` 按分类色板 fallback（后端 BookVO 无 coverTone）；`request.ts` 401 清登录态并动态 import 路由跳登录页；`Home.vue` 论坛（阶段二实现）失败不拖垮首页；`BookDetail.vue` 上架时间只显示日期；`vite.config.ts` 补 dev 代理 `/api/v1`→8080（此前真实模式会 404）。涉及：BookController/BookService/BookMapper.xml、api/category.ts、api/book.ts、api/request.ts、BookCover.vue、Home.vue、BookDetail.vue、vite.config.ts、README.md。
+
 ## 2026-08-17
 - 整合根目录文档：修订 CLAUDE.md（修正命令路径、合并 token.md 规则、去重、补充文件头），删除 token.md。
 - 记录本机开发环境基线（JDK 21.0.11、Maven 3.8.9、Node 24.9.0、npm 11.6.0、MySQL 8.4.5 端口 3306），标注 Redis/Docker/Nginx 未安装；CLAUDE.md 新增「本机开发环境」，plan.md 技术选型标注本机版本。

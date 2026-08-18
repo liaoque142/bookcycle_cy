@@ -15,12 +15,15 @@
 - [x] 后端脚手架（Spring Boot 3.5.16 + MyBatis XML Mapper + PageHelper 6.1.1，冒烟接口 GET /api/v1/categories 分页验证通过）
 - [x] 注册登录 + JWT 认证（Spring Security + BCrypt，RBAC 统一账号；seed 管理员 admin）
 - [x] 后端 Book 模块（发布/列表/详情 + BookVO 映射：分类名/枚举中文/卖家昵称/信誉）
+- [x] 最小闭环前端接通真实接口（`VITE_API_MOCK=false`）：后端补 `/books/featured`、`/books/latest` 只读接口；前端入参编码映射（分类名→categoryId、tradeType/condition 中文→码）、分类字典 api/category.ts、BookCover 按分类色板 fallback、401 跳登录页、vite dev 代理 `/api/v1`→8080；冒烟全链路（注册/登录/发布/精选/最新/筛选/详情/401/游客放行）通过
 
 ## 进行中
 - [ ] 前端剩余页面（论坛详情、交易流程 UI、管理后台，待对应后端阶段）
 
 ## 待办（阶段一，按序）
-- [ ] 最小闭环（后端已通）：前端接通真实接口（`VITE_API_MOCK=false` + 401 处理修复 + 书封色板 fallback + 入参编码映射）
+- [x] 最小闭环（认证 + Book）：后端 + 前端接通真实接口均完成
+- 阶段一收尾：可整理 CHANGELOG/README，确认浏览器真实模式体验后进入阶段二（论坛）
+- [ ] 阶段二：论坛模块（发帖/评论/点赞，板块 seed 数据），按评审建议「书籍讨论区提前至阶段二」
 
 ## 决策记录
 - 2026-08-17：持久层用 MyBatis XML Mapper + PageHelper，不用 MyBatis-Plus（⚠️ plan.md 技术选型仍写 MyBatis-Plus，待同步修订）

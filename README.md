@@ -39,6 +39,9 @@ npm run dev                      # mock 模式（默认）
 VITE_API_MOCK=false npm run dev  # 走真实后端
 ```
 
+> 前端 dev 已配置 `/api/v1` 代理到后端 8080（vite.config.ts），真实模式无需后端 CORS。
+> 注意：Windows cmd 不支持 `VAR=value 命令` 写法，用 `set VITE_API_MOCK=false&& npm run dev` 或改用 Git Bash。
+
 前端访问：`http://localhost:5173`；后端：`http://localhost:8080/api/v1`。
 
 ## 测试方式
@@ -89,4 +92,5 @@ curl -s -X POST $B/books -H "Content-Type: application/json" -d '{}'
 - **枚举存编码**：`trade_type` 1出售/2赠送/3交换，`condition` 1全新/2九成新/3八成新/4七成新及以下；展示中文由后端 SQL/服务层映射。
 - **RBAC 统一账号**：用户与管理员同 `sys_user` + `role`，无独立 admin 表；JWT 携带角色编码。
 - **DB 密码不入库**：走本机环境变量 `MYSQL_PASS`；JWT 密钥走 `JWT_SECRET`（默认 dev 值）。
+- **前端真实模式契约映射**：发布/筛选入参前端中文（分类名、交易方式、新旧程度）→ 后端编码（`categoryId`/`tradeType` 1-3/`condition` 1-4）；分类字典走 `GET /categories`；后端 BookVO 无书封色板，前端按分类 fallback；401 自动清登录态并跳登录页。
 - 进度、决策与踩坑记录见 [PROGRESS.md](PROGRESS.md)；变更历史见 [CHANGELOG.md](CHANGELOG.md)。

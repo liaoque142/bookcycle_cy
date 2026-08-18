@@ -1,8 +1,43 @@
 import request from './request'
 import { USE_MOCK, delay, toPage } from './mock'
+import { categoryIdByName } from './category'
 import { books, featuredBooks, latestBooks } from '@/data/books'
-import type { Book, BookQuery, PublishBookPayload } from '@/types/book'
+import type { Book, BookQuery, PublishBookPayload, TradeType } from '@/types/book'
 import type { Page } from '@/types/api'
+
+/** 前端中文展示值 → 后端枚举编码（tradeType 1出售/2赠送/3交换，condition 1-4） */
+const TRADE_TYPE_CODE: Record<TradeType, number> = { 出售: 1, 赠送: 2, 交换: 3 }
+const CONDITION_CODE: Record<string, number> = { 全新: 1, 九成新: 2, 八成新: 3, 七成新及以下: 4 }
+
+/** 书市筛选入参：分类名/中文枚举 → 后端编码字段（categoryId/tradeType/condition） */
+async function toBookParams(query: BookQuery): Promise<Record<string, string | number | undefined>> {
+  return {
+    keyword: query.keyword?.trim() || undefined,
+    categoryId: await categoryIdByName(query.category),
+    tradeType: query.tradeType ? TRADE_TYPE_CODE[query.tradeType] : undefined,
+    condition: query.condition ? CONDITION_CODE[query.condition] : undefined,
+    sort: query.sort || undefined,
+    page: query.page,
+    size: query.size,
+  }
+}
+
+/** 发布入参：分类名/中文枚举 → 后端编码，对齐 PublishBookRequest */
+async function toPublishParams(payload: PublishBookPayload): Promise<Record<string, unknown>> {
+  const categoryId = await categoryIdByName(payload.category)
+  if (!categoryId) throw new Error('请选择正确的分类')
+  return {
+    title: payload.title,
+    author: payload.author,
+    isbn: payload.isbn,
+    publisher: payload.publisher,
+    categoryId,
+    price: payload.price,
+    tradeType: TRADE_TYPE_CODE[payload.tradeType],
+    condition: CONDITION_CODE[payload.condition],
+    description: payload.description,
+  }
+}
 
 /** mock 极简过滤+排序：够演示即可，后端接管后由查询实现 */
 function filterBooks(query: BookQuery): Book[] {
@@ -26,12 +61,12 @@ function filterBooks(query: BookQuery): Book[] {
 }
 
 /** 书市列表（分页） */
-export async function fetchBooks(params: BookQuery = {}): Promise<Page<Book>> {
+export async function fetchBooks(query: BookQuery = {}): Promise<Page<Book>> {
   if (USE_MOCK) {
     await delay(150)
-    return toPage(filterBooks(params), params.page, params.size)
+    return toPage(filterBooks(query), query.page, query.size)
   }
-  return (await request.get('/books', { params })) as unknown as Page<Book>
+  return (await request.get('/books', { params: await toBookParams(query) })) as unknown as Page<Book>
 }
 
 /** 首页精选 */
@@ -79,5 +114,5 @@ export async function publishBook(payload: PublishBookPayload): Promise<Book> {
     books.unshift(created)
     return created
   }
-  return (await request.post('/books', payload)) as unknown as Book
+  return (await request.post('/books', await toPublishParams(payload))) as unknown as Book
 }

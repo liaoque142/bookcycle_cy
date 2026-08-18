@@ -1,19 +1,41 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Book } from '@/types/book'
 
 const props = withDefaults(
   defineProps<{
-    book: Pick<Book, 'title' | 'author' | 'coverTone' | 'coverToneText'>
+    book: Pick<Book, 'title' | 'author' | 'category' | 'coverTone' | 'coverToneText'>
     height?: string
   }>(),
   { height: 'auto' },
 )
+
+/** 分类书封色板：后端 BookVO 无 coverTone 字段，真实数据按分类取色（对齐 mock 色感） */
+const CATEGORY_PALETTE: Record<string, { bg: string; text: string }> = {
+  文学小说: { bg: '#EFEDE8', text: '#1A1A1A' },
+  教材教辅: { bg: '#E4E7E4', text: '#1A1A1A' },
+  人文社科: { bg: '#EBE3D9', text: '#1A1A1A' },
+  科学技术: { bg: '#DFE1E6', text: '#1A1A1A' },
+  少儿绘本: { bg: '#E8E6EB', text: '#333333' },
+  生活艺术: { bg: '#E5E7E4', text: '#1A1A1A' },
+  杂志期刊: { bg: '#E6E2DB', text: '#1A1A1A' },
+  其他: { bg: '#E3E1DC', text: '#1A1A1A' },
+}
+const DEFAULT_TONE = { bg: '#EAE6DF', text: '#1A1A1A' }
+
+const tone = computed(() => {
+  const palette = CATEGORY_PALETTE[props.book.category] ?? DEFAULT_TONE
+  return {
+    bg: props.book.coverTone || palette.bg,
+    text: props.book.coverToneText || palette.text,
+  }
+})
 </script>
 
 <template>
   <div
     class="book-cover"
-    :style="{ background: book.coverTone, color: book.coverToneText, height: height }"
+    :style="{ background: tone.bg, color: tone.text, height: height }"
   >
     <span class="book-cover__spine" aria-hidden="true" />
     <span class="book-cover__mark" aria-hidden="true" />

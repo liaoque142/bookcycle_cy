@@ -20,6 +20,9 @@ const priceLabel = computed(() => {
   return '赠送'
 })
 
+/** 上架时间：后端 LocalDateTime 为 ISO 串，只展示日期部分 */
+const createdLabel = computed(() => (book.value?.createdAt || '').slice(0, 10))
+
 function onBuy() {
   ElMessage.info('交易功能开发中，敬请期待')
 }
@@ -81,7 +84,7 @@ onMounted(async () => {
               </div>
               <div class="detail__attr">
                 <dt>上架时间</dt>
-                <dd>{{ book.createdAt }}</dd>
+                <dd>{{ createdLabel }}</dd>
               </div>
             </dl>
 

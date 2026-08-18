@@ -29,6 +29,13 @@ request.interceptors.response.use(
         localStorage.removeItem(TOKEN_KEY)
         localStorage.removeItem(USER_KEY)
         console.warn('[api] 401 未认证，登录态已清除')
+        // 跳转登录页（动态 import 避免 request ↔ router 循环依赖）
+        if (window.location.pathname !== '/login') {
+          const redirect = window.location.pathname + window.location.search
+          void import('@/router').then(({ default: router }) =>
+            router.push({ path: '/login', query: { redirect } }),
+          )
+        }
       }
       return Promise.reject(new Error(body.message || '请求失败'))
     }

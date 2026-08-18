@@ -15,14 +15,15 @@ const latestBooks = ref<Book[]>([])
 const posts = ref<ForumPost[]>([])
 
 onMounted(async () => {
-  const [f, l, p] = await Promise.all([
-    fetchFeaturedBooks(),
-    fetchLatestBooks(),
-    fetchForumPosts(),
-  ])
+  const [f, l] = await Promise.all([fetchFeaturedBooks(), fetchLatestBooks()])
   featuredBooks.value = f
   latestBooks.value = l
-  posts.value = p
+  // 论坛后端阶段二实现，真实模式暂时可能失败，不拖垮首页
+  fetchForumPosts()
+    .then((p) => (posts.value = p))
+    .catch(() => {
+      posts.value = []
+    })
 })
 </script>
 

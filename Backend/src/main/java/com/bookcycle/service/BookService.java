@@ -53,6 +53,16 @@ public class BookService {
         return PageResult.of(new PageInfo<>(list));
     }
 
+    /** 首页精选：高信誉卖家在售书 top N（复用 list 排序，游客可看） */
+    public List<BookVO> featured(int size) {
+        return list(null, null, null, null, "credit", 1, size).getList();
+    }
+
+    /** 首页最新上架：最新在售书 top N */
+    public List<BookVO> latest(int size) {
+        return list(null, null, null, null, "latest", 1, size).getList();
+    }
+
     public BookVO detail(Long id) {
         BookVO vo = bookMapper.selectById(id);
         if (vo == null) {

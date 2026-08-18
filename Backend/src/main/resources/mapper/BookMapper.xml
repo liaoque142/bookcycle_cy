@@ -56,6 +56,8 @@
         <choose>
             <when test="sort == 'price_asc'">ORDER BY b.price ASC</when>
             <when test="sort == 'price_desc'">ORDER BY b.price DESC</when>
+            <!-- 首页精选：高信誉卖家优先 -->
+            <when test="sort == 'credit'">ORDER BY su.credit DESC, b.create_time DESC</when>
             <otherwise>ORDER BY b.create_time DESC</otherwise>
         </choose>
     </select>
