@@ -14,6 +14,7 @@ import com.bookcycle.exception.BusinessException;
 import com.bookcycle.mapper.AddressMapper;
 import com.bookcycle.mapper.BookMapper;
 import com.bookcycle.mapper.EvaluationMapper;
+import com.bookcycle.mapper.FriendMapper;
 import com.bookcycle.mapper.TradeMapper;
 import com.bookcycle.mapper.UserMapper;
 import com.bookcycle.vo.EvaluationVO;
@@ -54,7 +55,9 @@ public class TradeService {
     private final UserMapper userMapper;
     private final AddressMapper addressMapper;
     private final EvaluationMapper evaluationMapper;
+    private final FriendMapper friendMapper;
     private final CreditService creditService;
+    private final NotificationService notificationService;
 
     /** 下单：防超卖 CAS（在售→已预订），出售待支付 / 赠送直接待发货 */
     @Transactional
@@ -73,6 +76,9 @@ public class TradeService {
         }
         if (book.getUserId().equals(buyerId)) {
             throw new BusinessException("不能购买自己发布的书籍");
+        }
+        if (friendMapper.countBlackBetween(buyerId, book.getUserId()) > 0) {
+            throw new BusinessException("双方存在拉黑关系，无法交易");
         }
         if (book.getTradeType() == 1 && credit < 60) {
             throw new BusinessException("信誉分低于 60，暂无法下单购买");
@@ -106,6 +112,8 @@ public class TradeService {
         order.setAddressId(addressId);
         order.setAfterSale(0);
         tradeMapper.insertOrder(order);
+        notificationService.notify(book.getUserId(), NotificationService.TYPE_TRADE,
+                "您的《" + book.getTitle() + "》收到新订单 " + order.getOrderNo() + "，请及时处理");
         return detail(order.getOrderNo(), buyerId);
     }
 
@@ -124,6 +132,8 @@ public class TradeService {
         payment.setPayStatus(1);
         payment.setPayTime(LocalDateTime.now());
         tradeMapper.insertPayment(payment);
+        notificationService.notify(order.getSellerId(), NotificationService.TYPE_TRADE,
+                "订单 " + orderNo + " 已支付，请安排发货");
         return detail(orderNo, userId);
     }
 
@@ -159,6 +169,9 @@ public class TradeService {
                 creditService.apply(userId, "MALICIOUS_CANCEL", null);
             }
         }
+        Long otherId = isBuyer ? order.getSellerId() : order.getBuyerId();
+        notificationService.notify(otherId, NotificationService.TYPE_TRADE,
+                "订单 " + orderNo + " 已取消" + (StringUtils.hasText(req.getReason()) ? "：" + req.getReason() : ""));
         return detail(orderNo, userId);
     }
 
@@ -172,6 +185,8 @@ public class TradeService {
         if (tradeMapper.updateStatus(order.getId(), ORDER_PENDING_SHIP, ORDER_SHIPPED) == 0) {
             throw new BusinessException("当前订单状态不可发货");
         }
+        notificationService.notify(order.getBuyerId(), NotificationService.TYPE_TRADE,
+                "订单 " + orderNo + " 已发货，请注意查收");
         return detail(orderNo, userId);
     }
 
@@ -186,6 +201,8 @@ public class TradeService {
         bookMapper.updateStatusIfEquals(order.getBookId(), BOOK_RESERVED, BOOK_SOLD);
         creditService.apply(order.getBuyerId(), "TRADE_SUCCESS", null);
         creditService.apply(order.getSellerId(), "TRADE_SUCCESS", null);
+        notificationService.notify(order.getSellerId(), NotificationService.TYPE_TRADE,
+                "订单 " + orderNo + " 已确认收货，交易完成");
         return detail(orderNo, userId);
     }
 
@@ -215,6 +232,8 @@ public class TradeService {
         if (req.getScore() >= 4) {
             creditService.apply(targetId, "GOOD_REVIEW", null);
         }
+        notificationService.notify(targetId, NotificationService.TYPE_TRADE,
+                "您收到一条新的交易评价（订单 " + orderNo + "）");
     }
 
     public PageResult<OrderVO> list(String role, Integer status, int page, int size, Long userId) {
