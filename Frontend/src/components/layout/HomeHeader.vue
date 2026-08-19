@@ -109,6 +109,7 @@ const navs = [
               <el-dropdown-item command="friends">我的好友</el-dropdown-item>
               <el-dropdown-item command="notifications">消息通知</el-dropdown-item>
               <el-dropdown-item command="publish">发布书籍</el-dropdown-item>
+              <el-dropdown-item v-if="authStore.user?.role === 'admin'" command="admin">管理后台</el-dropdown-item>
               <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>

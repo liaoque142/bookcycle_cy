@@ -1,7 +1,7 @@
 # 项目进度
 
 ## 当前阶段
-阶段五：管理后台（后端用户/分类/书籍管理 + 操作日志已完成，收尾中）
+阶段五：管理后台（后端 + 前端页面已上线，剩交易管理/数据统计/系统配置/退款售后）
 
 ## 已完成
 - [x] 需求整合修订（plan.md：7 阶段划分、补 6 张表、信誉规则改数据驱动、错误码规范）
@@ -20,9 +20,10 @@
 - [x] 阶段三交易与信誉（后端 + 前端）：地址 CRUD + 设默认（首条自动默认）；下单（出售/赠送、邮寄/自提，书籍状态 CAS 在售→已预订防超卖，信誉 <40 冻结 / <60 禁购买）；模拟支付写 payment；取消释放书籍 + 已支付自动模拟退款 + 买家待发货取消扣 MALICIOUS_CANCEL -3；发货/确认收货（书转已售出、双方 TRADE_SUCCESS +2）；互评（uk 幂等、好评 ≥4 分 GOOD_REVIEW +1）；credit_rule 数据驱动（seed 7 条）+ credit_log 日志 + /credit/me、/credit/logs；前端 Address/Orders/Credit 三页 + 路由 + BookDetail 下单流（选地址/自提/模拟支付）+ Profile 接线；冒烟（防超卖/支付/发货/收货/互评幂等/信誉增减/取消扣分/退款/越权 403/401）+ 经 vite 代理 E2E 全通过，mvn test 与 vue-tsc/vite build 通过，冒烟数据已清理
 - [x] 阶段四社交（后端 + 前端）：用户搜索 `GET /friends/search`；好友 `GET /friends`、`POST /friends/requests`（幂等：已是好友/待处理申请/双向拉黑拦截）、`GET /friends/requests`、`PUT /requests/{id}`（accept 双向 upsert friend、reject）、`DELETE /friends/{userId}`（双向 status=0）；黑名单 `GET|POST /api/v1/blacklist`、`DELETE /{userId}`（拉黑自动解除好友、INSERT IGNORE 幂等，双向阻断好友申请 + 下单）；书籍讨论 `GET|POST /api/v1/books/{id}/discussions`（游客可看、树组装）、`DELETE /{id}`（本人或书作者）；通知 `GET /api/v1/notifications`（分页/unreadOnly/typeName CASE）、`GET /unread-count`、`PUT /{id}/read`、`PUT /read-all`，交易全流程 + 好友申请触发（type 2/3）；前端 Friends/Notifications 页 + 路由、BookDetail 讨论区、HomeHeader 铃铛红点（30s 轮询）+ 下拉入口、Profile 菜单接通；冒烟 33 项全通过 + vue-tsc/build + 经 vite 代理 E2E 通过，冒烟数据已清理
 - [x] 阶段五管理后台（后端第一批）：SecurityConfig 加 `.requestMatchers("/api/v1/admin/**").hasRole("admin")`（未登录 401、普通用户 403，JWT filter 已注入 ROLE_）；操作日志 operation_log（实体/Mapper/Service record+page，`@Transactional` 内同事务记录，查询接口 `GET /admin/operation-logs`）；用户管理 `GET /admin/users`（keyword/status 筛选分页）、`GET /users/{id}` 详情、`PUT /users/{id}/status`（禁管理员账号拦截、禁用后登录被拦 403）、`PUT /users/{id}/credit`（信用日志记操作人，禁调自己）；分类管理 `GET /admin/categories`（扁平组树）、`POST`、`PUT /{id}`、`DELETE /{id}`（同级同名去重、父分类存在性、删前查子分类/书籍占用）；书籍管理 `GET /admin/books`（全状态含已下架，keyword/status/tradeType/categoryId 筛选）、`PUT /{id}/status`（下架 1→4 / 上架 4→1，CAS 校验交易中不可操作）；BookVO 补 statusName（SQL CASE）；冒烟 20 项全通过（含越权 403/未登录 401/禁用登录 403/重复分类 400/交易中书下架 400/非法状态 400/缺参数 400/不存在 404），mvn test 通过，冒烟数据已清理
+- [x] 阶段五管理后台（前端）：`types/admin.ts` + `api/admin.ts`（全接口 + mock 分支）；`/admin` 嵌套路由 + `AdminLayout`（深色侧边栏 el-menu + 顶栏返回前台/退出，requiresAdmin 守卫：未登录跳登录、非 admin 回首页）；`AdminUsers` 用户管理（keyword/status 筛选 + 表格 + 详情抽屉 + 禁用/启用确认 + 调整信誉分弹窗，admin 账号禁禁用置灰）；`AdminCategories` 分类管理（扁平组树 el-table tree + 新增根/新增子/编辑/删除 + 父分类下拉、启用开关）；`AdminBooks` 书籍管理（keyword/status/交易方式/分类筛选 + 表格 + 下架/上架，交易中按钮置灰）；`AdminOperationLogs` 操作日志（action 筛选 + 分页表格）；HomeHeader 登录下拉加「管理后台」入口（仅 admin 显示）；冒烟经 vite 代理：admin 各接口 200、无 token 401、普通用户 403、分类 CRUD + 同名 400、操作日志联表记录，vue-tsc/vite build 通过，冒烟数据已清理
 
 ## 进行中
-- [ ] 阶段五管理后台前端（/admin 布局 + 用户/分类/书籍管理页 + 操作日志页 + 路由守卫）→ 阶段五剩余（交易管理/数据统计/系统配置/退款售后）
+- [ ] 阶段五剩余（交易管理/数据统计（需 `npm i echarts`）/系统配置（credit_rule 切换）/退款售后（需先补用户侧申请退款接口））→ 阶段六 swap（书友互换）→ 阶段七 测试与部署（Redis/Docker/Nginx 需先安装）
 
 ## 待办（阶段一，按序）
 - [x] 最小闭环（认证 + Book）：后端 + 前端接通真实接口均完成

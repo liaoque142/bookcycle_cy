@@ -61,6 +61,38 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/admin',
+      component: () => import('@/views/admin/AdminLayout.vue'),
+      redirect: '/admin/users',
+      meta: { requiresAdmin: true },
+      children: [
+        {
+          path: 'users',
+          name: 'admin-users',
+          component: () => import('@/views/admin/AdminUsers.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
+          path: 'categories',
+          name: 'admin-categories',
+          component: () => import('@/views/admin/AdminCategories.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
+          path: 'books',
+          name: 'admin-books',
+          component: () => import('@/views/admin/AdminBooks.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
+          path: 'logs',
+          name: 'admin-logs',
+          component: () => import('@/views/admin/AdminOperationLogs.vue'),
+          meta: { requiresAdmin: true },
+        },
+      ],
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('@/views/About.vue'),
@@ -90,9 +122,19 @@ const router = createRouter({
   ],
 })
 
-// 鉴权守卫：受保护页未登录时重定向到登录页，并携带回跳地址
+// 鉴权守卫：受保护页未登录时重定向到登录页，并携带回跳地址；管理后台仅 admin 角色
 router.beforeEach((to) => {
-  if (to.meta.requiresAuth && !useAuthStore().isLoggedIn) {
+  const auth = useAuthStore()
+  if (to.meta.requiresAdmin) {
+    if (!auth.isLoggedIn) {
+      return { path: '/login', query: { redirect: to.fullPath } }
+    }
+    if (auth.user?.role !== 'admin') {
+      return { path: '/' }
+    }
+    return
+  }
+  if (to.meta.requiresAuth && !auth.isLoggedIn) {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
 })
