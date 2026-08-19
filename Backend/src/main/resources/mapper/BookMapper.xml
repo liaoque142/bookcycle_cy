@@ -64,6 +64,14 @@
         </choose>
     </select>
 
+    <!-- 我发布的书籍分页（status 可选过滤） -->
+    <select id="selectMinePage" resultMap="BookVOMap">
+        <include refid="bookVoColumns"/>
+        WHERE b.user_id = #{userId} AND b.deleted = 0
+        <if test="status != null">AND b.status = #{status}</if>
+        ORDER BY b.create_time DESC
+    </select>
+
     <!-- 管理后台书籍分页列表：全状态（含已下架），支持状态/交易方式/分类筛选 -->
     <select id="selectAdminPage" resultMap="BookVOMap">
         <include refid="bookVoColumns"/>

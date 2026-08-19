@@ -33,6 +33,9 @@ public interface BookMapper {
     @Select("SELECT * FROM book WHERE id = #{id} AND deleted = 0")
     Book selectEntityById(@Param("id") Long id);
 
+    /** 我发布的书籍分页（交换发起选书等；status 可选过滤，SQL 在 XML） */
+    List<BookVO> selectMinePage(@Param("userId") Long userId, @Param("status") Integer status);
+
     /** 书籍状态 CAS 原子变更（防超卖：在售→已预订 / 已预订→在售 / 已预订→已售出） */
     @Update("UPDATE book SET status = #{to} WHERE id = #{id} AND status = #{from}")
     int updateStatusIfEquals(@Param("id") Long id, @Param("from") Integer from, @Param("to") Integer to);

@@ -51,6 +51,15 @@ public class BookController {
         return Result.ok(bookService.list(keyword, categoryId, tradeType, condition, sort, page, size));
     }
 
+    /** 我发布的书籍分页（需登录；status 可选过滤，如交换发起选在售书） */
+    @GetMapping("/mine")
+    public Result<PageResult<BookVO>> mine(
+            @RequestParam(required = false) Integer status,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "50") @Min(1) @Max(100) int size) {
+        return Result.ok(bookService.mine(status, page, size, SecurityUtils.currentUserId()));
+    }
+
     @GetMapping("/{id}")
     public Result<BookVO> detail(@PathVariable Long id) {
         return Result.ok(bookService.detail(id));

@@ -46,6 +46,8 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        // 我的书籍需登录（放行 /books/** 前优先匹配）
+                        .requestMatchers(HttpMethod.GET, "/api/v1/books/mine").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories/**", "/api/v1/books/**", "/api/v1/forum/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("admin")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()

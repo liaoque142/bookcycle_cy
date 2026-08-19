@@ -24,6 +24,13 @@ export interface Book {
   isbn?: string
   /** 描述 */
   description: string
+  /** 分类ID（后端 BookVO 返回） */
+  categoryId?: number
+  /** 卖家ID（后端 BookVO 返回） */
+  sellerId?: number
+  /** 书籍状态：1 在售 / 2 已预订 / 3 已售出 / 4 已下架 */
+  status?: number
+  statusName?: string
 }
 
 /** 发布书籍提交参数 */

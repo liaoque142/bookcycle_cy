@@ -342,6 +342,37 @@ CREATE TABLE IF NOT EXISTS `trade_evaluation` (
   CONSTRAINT `chk_score` CHECK (`score` BETWEEN 1 AND 5)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='交易评价表';
 
+-- 20.1 交换单表（以书换书：买家以书 B 换卖家书 A，需对方同意 + 双向发货 + 双向确认收货；SWAP 非保留字，统一反引号）
+CREATE TABLE IF NOT EXISTS `swap` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `swap_no` VARCHAR(32) NOT NULL COMMENT '交换单号（唯一）',
+  `initiator_id` BIGINT UNSIGNED NOT NULL COMMENT '发起人（买家）用户ID',
+  `receiver_id` BIGINT UNSIGNED NOT NULL COMMENT '接收方（卖家）用户ID',
+  `book_id` BIGINT UNSIGNED NOT NULL COMMENT '被交换书籍ID（卖家书 A）',
+  `offer_book_id` BIGINT UNSIGNED NOT NULL COMMENT '发起人提供的书籍ID（买家书 B）',
+  `message` VARCHAR(255) DEFAULT NULL COMMENT '发起人附言',
+  `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1 待对方同意 / 2 已同意待发货 / 3 交换中 / 4 已完成 / 5 已取消 / 6 已拒绝',
+  `initiator_ship_type` TINYINT DEFAULT NULL COMMENT '发起人物流方式：1 邮寄 / 2 自提',
+  `initiator_address_id` BIGINT UNSIGNED DEFAULT NULL COMMENT '发起人收货地址ID（收书 A）',
+  `receiver_ship_type` TINYINT DEFAULT NULL COMMENT '接收方物流方式：1 邮寄 / 2 自提',
+  `receiver_address_id` BIGINT UNSIGNED DEFAULT NULL COMMENT '接收方收货地址ID（收书 B）',
+  `initiator_shipped_at` DATETIME DEFAULT NULL COMMENT '发起人发货时间',
+  `receiver_shipped_at` DATETIME DEFAULT NULL COMMENT '接收方发货时间',
+  `initiator_confirmed_at` DATETIME DEFAULT NULL COMMENT '发起人确认收货时间',
+  `receiver_confirmed_at` DATETIME DEFAULT NULL COMMENT '接收方确认收货时间',
+  `cancel_reason` VARCHAR(255) DEFAULT NULL COMMENT '取消原因',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0 正常 / 1 删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_swap_no` (`swap_no`),
+  KEY `idx_initiator_id` (`initiator_id`),
+  KEY `idx_receiver_id` (`receiver_id`),
+  KEY `idx_book_id` (`book_id`),
+  KEY `idx_offer_book_id` (`offer_book_id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='交换单表';
+
 -- ============================================================
 -- 五、信誉与通知
 -- ============================================================

@@ -14,6 +14,7 @@ const loading = ref(true)
 
 const menuItems = [
   { name: '我的订单', desc: '买入与卖出的交易', to: '/orders' },
+  { name: '我的换书', desc: '以书换书的交换单', to: '/swaps' },
   { name: '收货地址', desc: '管理邮寄地址', to: '/addresses' },
   { name: '我的好友', desc: '好友与黑名单管理', to: '/friends' },
   { name: '消息通知', desc: '交易与好友消息', to: '/notifications' },

@@ -98,6 +98,16 @@ export async function fetchBookById(id: number): Promise<Book> {
   return (await request.get(`/books/${id}`)) as unknown as Book
 }
 
+/** 我发布的书籍（需登录；status 可选过滤，如交换发起选在售书） */
+export async function fetchMyBooks(status?: number): Promise<Book[]> {
+  if (USE_MOCK) {
+    await delay(150)
+    return books.filter((b) => b.seller === '书友小明')
+  }
+  const page = (await request.get('/books/mine', { params: { status, page: 1, size: 100 } })) as unknown as Page<Book>
+  return page.list
+}
+
 /** 发布书籍（mock 生成 id/时间戳，返回新书） */
 export async function publishBook(payload: PublishBookPayload): Promise<Book> {
   if (USE_MOCK) {

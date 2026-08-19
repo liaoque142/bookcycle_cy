@@ -4,9 +4,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Star, StarFilled } from '@element-plus/icons-vue'
 import BookCover from '@/components/common/BookCover.vue'
-import { fetchBookById } from '@/api/book'
+import { fetchBookById, fetchMyBooks } from '@/api/book'
 import { fetchAddresses } from '@/api/address'
 import { createOrder, payOrder } from '@/api/order'
+import { createSwap } from '@/api/swap'
 import { fetchDiscussions, createDiscussion, deleteDiscussion } from '@/api/discussion'
 import { useAuthStore } from '@/stores/auth'
 import type { Book } from '@/types/book'
@@ -43,15 +44,74 @@ const pendingPay = ref<Order | null>(null)
 const paying = ref(false)
 
 function onBuy() {
-  if (book.value?.tradeType === '交换') {
-    ElMessage.info('交换功能二期上线，敬请期待')
-    return
-  }
   if (!authStore.isLoggedIn) {
     router.push({ path: '/login', query: { redirect: route.fullPath } })
     return
   }
   orderVisible.value = true
+}
+
+// ---- 交换流（以书换书） ----
+const swapVisible = ref(false)
+const offerBooks = ref<Book[]>([])
+const offerBookId = ref<number>()
+const swapShipType = ref(1) // 1 邮寄 / 2 自提
+const swapAddressId = ref<number>()
+const swapMessage = ref('')
+const swapping = ref(false)
+
+function onSwap() {
+  if (!authStore.isLoggedIn) {
+    router.push({ path: '/login', query: { redirect: route.fullPath } })
+    return
+  }
+  swapVisible.value = true
+}
+
+/** 打开交换弹窗：预载我的在售书 + 地址 */
+async function onSwapOpen() {
+  swapShipType.value = 1
+  offerBookId.value = undefined
+  swapAddressId.value = undefined
+  swapMessage.value = ''
+  try {
+    const [mine, addr] = await Promise.all([fetchMyBooks(1), fetchAddresses()])
+    offerBooks.value = mine
+    addresses.value = addr
+    swapAddressId.value = addr.find((a) => a.isDefault)?.id
+  } catch {
+    offerBooks.value = []
+    addresses.value = []
+  }
+}
+
+async function submitSwap() {
+  if (!book.value) return
+  if (!offerBookId.value) {
+    ElMessage.warning('请选择用于交换的书籍')
+    return
+  }
+  if (swapShipType.value === 1 && !swapAddressId.value) {
+    ElMessage.warning('请选择收货地址')
+    return
+  }
+  swapping.value = true
+  try {
+    await createSwap({
+      bookId: book.value.id,
+      offerBookId: offerBookId.value,
+      shipType: swapShipType.value,
+      addressId: swapAddressId.value,
+      message: swapMessage.value.trim() || undefined,
+    })
+    swapVisible.value = false
+    ElMessage.success('交换申请已发出，等待对方同意')
+    router.push('/swaps')
+  } catch (e) {
+    ElMessage.error((e as Error).message || '发起交换失败')
+  } finally {
+    swapping.value = false
+  }
 }
 
 /** 打开下单弹窗时预载地址（邮寄需要） */
@@ -266,7 +326,7 @@ onMounted(async () => {
               <el-button v-if="book.tradeType !== '交换'" type="primary" round size="large" @click="onBuy">
                 {{ book.tradeType === '赠送' ? '免费领取' : '立即购买' }}
               </el-button>
-              <el-button v-else type="primary" round size="large" @click="onBuy">交换（二期）</el-button>
+              <el-button v-else type="primary" round size="large" @click="onSwap">我要交换</el-button>
               <el-button round size="large" @click="onFavorite">
                 <el-icon class="detail__fav" :class="{ 'detail__fav--on': favorite }">
                   <component :is="favorite ? StarFilled : Star" />
@@ -366,6 +426,55 @@ onMounted(async () => {
     <template #footer>
       <el-button @click="orderVisible = false">取消</el-button>
       <el-button type="primary" :loading="creating" @click="submitOrder">提交订单</el-button>
+    </template>
+  </el-dialog>
+
+  <!-- 交换弹窗：选我的在售书 + 物流方式 + 收货地址 + 附言 -->
+  <el-dialog v-model="swapVisible" title="以书换书" width="520px" :close-on-click-modal="false" @open="onSwapOpen">
+    <div v-if="book" class="swap-dialog">
+      <p class="swap-dialog__book">
+        用我的书 换 《{{ book.title }}》
+      </p>
+      <template v-if="offerBooks.length">
+        <div class="swap-dialog__field">
+          <p class="swap-dialog__label">我的书籍</p>
+          <el-select v-model="offerBookId" placeholder="选择一本在售书籍用于交换" style="width: 100%">
+            <el-option v-for="b in offerBooks" :key="b.id" :value="b.id" :label="`《${b.title}》 ${b.author}`" />
+          </el-select>
+        </div>
+        <div class="swap-dialog__field">
+          <p class="swap-dialog__label">我收书的物流方式</p>
+          <el-radio-group v-model="swapShipType" class="swap-dialog__ship">
+            <el-radio-button :value="1">邮寄</el-radio-button>
+            <el-radio-button :value="2">自提</el-radio-button>
+          </el-radio-group>
+        </div>
+        <div v-if="swapShipType === 1" class="swap-dialog__field">
+          <p class="swap-dialog__label">收货地址</p>
+          <el-select v-model="swapAddressId" placeholder="请选择收货地址" style="width: 100%">
+            <el-option
+              v-for="a in addresses"
+              :key="a.id"
+              :value="a.id"
+              :label="`${a.receiverName} ${a.phone} · ${a.province}${a.city}${a.district} ${a.detail}`"
+            />
+          </el-select>
+          <p class="swap-dialog__manage">
+            <router-link to="/addresses">管理收货地址</router-link>
+          </p>
+        </div>
+        <div class="swap-dialog__field">
+          <el-input v-model="swapMessage" maxlength="255" show-word-limit placeholder="给对方留个言（可留空）" />
+        </div>
+      </template>
+      <div v-else class="swap-dialog__empty">
+        <p>您还没有可交换的在售书籍</p>
+        <router-link to="/publish" class="swap-dialog__publish">去发布书籍</router-link>
+      </div>
+    </div>
+    <template #footer>
+      <el-button @click="swapVisible = false">取消</el-button>
+      <el-button type="primary" :loading="swapping" :disabled="!offerBooks.length" @click="submitSwap">发起交换</el-button>
     </template>
   </el-dialog>
 
@@ -588,6 +697,52 @@ onMounted(async () => {
     margin-top: var(--sp-4);
     font-size: 0.8rem;
     color: var(--muted);
+  }
+}
+
+.swap-dialog {
+  &__book {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-bottom: var(--sp-4);
+  }
+
+  &__field {
+    margin-top: var(--sp-3);
+  }
+
+  &__label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: var(--sp-2);
+  }
+
+  &__ship {
+    display: flex;
+    gap: var(--sp-2);
+  }
+
+  &__manage {
+    margin-top: var(--sp-2);
+    font-size: 0.82rem;
+
+    a {
+      color: var(--mark);
+    }
+  }
+
+  &__empty {
+    text-align: center;
+    padding: var(--sp-5) 0;
+    color: var(--muted);
+    display: grid;
+    gap: var(--sp-3);
+    justify-items: center;
+
+    &-publish {
+      color: var(--mark);
+    }
   }
 }
 

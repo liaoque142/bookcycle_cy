@@ -1,7 +1,7 @@
 # 项目进度
 
 ## 当前阶段
-阶段五：管理后台全部完成（用户/分类/书籍/交易管理 + 退款售后 + 数据统计 + 系统配置 + 操作日志），下一步阶段六 swap（书友互换）
+阶段六：swap（书友互换）全部完成，下一步阶段七 测试与部署（Redis/Docker/Nginx 需先安装）
 
 ## 已完成
 - [x] 需求整合修订（plan.md：7 阶段划分、补 6 张表、信誉规则改数据驱动、错误码规范）
@@ -23,9 +23,10 @@
 - [x] 阶段五管理后台（前端）：`types/admin.ts` + `api/admin.ts`（全接口 + mock 分支）；`/admin` 嵌套路由 + `AdminLayout`（深色侧边栏 el-menu + 顶栏返回前台/退出，requiresAdmin 守卫：未登录跳登录、非 admin 回首页）；`AdminUsers` 用户管理（keyword/status 筛选 + 表格 + 详情抽屉 + 禁用/启用确认 + 调整信誉分弹窗，admin 账号禁禁用置灰）；`AdminCategories` 分类管理（扁平组树 el-table tree + 新增根/新增子/编辑/删除 + 父分类下拉、启用开关）；`AdminBooks` 书籍管理（keyword/status/交易方式/分类筛选 + 表格 + 下架/上架，交易中按钮置灰）；`AdminOperationLogs` 操作日志（action 筛选 + 分页表格）；HomeHeader 登录下拉加「管理后台」入口（仅 admin 显示）；冒烟经 vite 代理：admin 各接口 200、无 token 401、普通用户 403、分类 CRUD + 同名 400、操作日志联表记录，vue-tsc/vite build 通过，冒烟数据已清理
 - [x] 阶段五剩余第一批（交易管理/数据统计/系统配置）：**交易管理** `GET /admin/orders`（keyword 匹配订单号/书名/买卖方用户名 + status/tradeType 筛选分页，复用 orderVoColumns 加额外条件）、`GET /admin/orders/{orderNo}` 详情；**系统配置** `GET /admin/credit-rules`（7 条规则按 priority）+ `PUT /credit-rules/{id}/status`（启用/禁用，操作日志 TOGGLE_CREDIT_RULE，禁用后 CreditService.apply 自动忽略）；**数据统计** `GET /admin/stats/overview`（用户/书籍/订单/今日订单/今日新增/交易额/待处理售后）+ `GET /admin/stats/trend?days=1-30`（每日订单/新增用户按日聚合 + Java 补零对齐，独立 StatsMapper 注解聚合）；前端 `AdminOrders`（筛选表格 + 详情抽屉 + 分页）、`AdminStats`（概览卡片 + echarts 7 日趋势，core 按需引入 chunk 1.1MB→513KB）、`AdminConfig`（规则表格 + 启用/禁用开关确认）三页 + AdminLayout 菜单（购物车/趋势/设置图标）+ 路由；冒烟（overview/trend 补零/7 规则/toggle 往返/订单筛选/404/401）+ mvn test + vue-tsc/vite build + 经 vite 代理 E2E 全通过，冒烟操作日志已清理
 - [x] 阶段五剩余第二批（退款售后）：**用户侧** `POST /orders/{orderNo}/refund`（买家申请，待发货→仅退款 / 待收货、已完成→退货退款，金额校验 >0，幂等拦截重复申请，仅置 trade_order.after_sale=1 订单状态不变，ship/confirm/cancel 三处 after_sale 守卫拦截，通知卖家）；**管理后台** `GET /admin/refunds`（keyword 匹配订单号/书名/申请人用户名 + status/type 筛选分页，RefundVO 联表订单/书/申请人/处理人）+ `PUT /admin/refunds/{id}/handle`（agree 同意→订单取消+cancel_reason、书籍 2/3→1 释放回在售、已支付自动退款、after_sale=3、售后单已完成；拒绝→仅回退 after_sale=0 买家可重试；操作日志 REFUND_HANDLE + 通知双方/买家）；OrderVO/orderVoColumns 补 afterSale 字段；前端 `AdminRefunds` 页（筛选表格 + 处理弹窗 同意/拒绝 + 处理说明 + 分页）+ AdminLayout 菜单（售后管理 Service 图标）+ 路由；冒烟（申请/守卫/拒绝重试/同意释放书籍退款/退货退款路径/边界 400/401/403/重复处理）全通过 + mvn test + vue-tsc/vite build + 经 vite 代理 E2E 全通过，冒烟数据已清理
+- [x] 阶段六 swap（书友互换，后端 + 前端）：独立 `swap` 表 + 独立状态机（1 待对方同意 / 2 已同意待发货 / 3 交换中 / 4 已完成 / 5 已取消 / 6 已拒绝，双方各自发货/确认收货用 shipped_at/confirmed_at 记录）。**后端**：`POST /api/v1/swaps` 发起（用我的在售书 B 换卖家交换书 A，双书 CAS 在售→已预订防并发，拉黑双向阻断 + 信誉 <40 冻结，邮寄必填地址）；`GET /swaps`（role=initiator|receiver + status 筛选分页，SwapVO 联表双书/双方昵称/双方收货地址）+ `GET /swaps/{swapNo}` 详情（参与者可见）；`PUT /swaps/{swapNo}/accept`（接收方同意 + 填收书地址）、`PUT /reject`（两书释放回在售）、`POST /cancel`（待同意/已同意且本人未发货可取消，两书释放）、`POST /ship`（本人发自己的书，书 已预订→已售出，双方都发→交换中）、`POST /confirm`（需对方已发货，双方都确认→已完成，双方 TRADE_SUCCESS +2 + 通知）；全部用 CAS 更新防重复处理（accept/ship/confirm/cancel 均幂等拦截）。Book 模块补 `GET /books/mine`（我的在售书，需登录——SecurityConfig 在 GET /books/** 放行前加 /books/mine authenticated）；**前端**：types/swap.ts + api/swap.ts（含 mock 分支）、`Swap.vue` 页（我发起的/我收到的 Tab + 状态筛选 + 同意弹窗/拒绝/取消/发货/确认收货 + 分页）、BookDetail 交换书「我要交换」弹窗（选我的在售书 + 物流 + 地址 + 附言，无书提示去发布）、路由 /swaps、Profile 菜单加「我的换书」。冒烟两批 57 项全通过（含主链路/拒绝重试/取消释放/确认前置守卫/部分确认/双确认信誉/第三方 403/无 token 401/重复操作 400）+ mvn test + vue-tsc/vite build + 经 vite 代理 E2E 通过，冒烟数据已清理
 
 ## 进行中
-- [ ] 阶段六 swap（书友互换）→ 阶段七 测试与部署（Redis/Docker/Nginx 需先安装）
+- [ ] 阶段七 测试与部署（Redis/Docker/Nginx 需先安装）
 
 ## 待办（阶段一，按序）
 - [x] 最小闭环（认证 + Book）：后端 + 前端接通真实接口均完成
@@ -51,6 +52,7 @@
 - 2026-08-19：管理后台设计——**admin 路由用 SecurityConfig `.hasRole("admin")`**（JWT filter 已注入 `ROLE_<role>` 权限，未登录 401、普通用户 403 均走现有 handler）；操作日志**不做 AOP**（pom 无 aspectj，遵循现有 Service 风格），用 OperationLogService.record() 在各 Admin Service `@Transactional` 内与业务同事务调用；用户禁用/信誉调整**禁止作用于 admin 账号**（防锁死），禁调自己信誉分；分类逻辑删除前校验子分类/书籍占用；书籍下架/上架用已有 `updateStatusIfEquals` CAS（1→4 / 4→1），交易中（2/3）不可操作；BookVO 增 statusName（CASE 中文）供管理列表展示
 - 2026-08-19：阶段五剩余第一批设计——交易订单管理**只读**（keyword 匹配订单号/书名/买卖方用户名，复用 `orderVoColumns` SQL fragment + 额外条件，读操作不记操作日志）；信誉规则数据驱动开关（`PUT /credit-rules/{id}/status`，禁用后 CreditService.apply 自动忽略，无需改业务代码）；统计聚合 SQL 走**独立 StatsMapper 注解**（简单聚合不进 XML），trend 用 MySQL `DATE_FORMAT` 按日聚合 + Java 侧补零对齐（避免日期脊柱 SQL）；前端 echarts 用 **core 按需引入**（LineChart + Grid/Tooltip/Legend + CanvasRenderer），AdminStats chunk 1.1MB→513KB，路由懒加载
 - 2026-08-19：退款售后设计——申请**不改订单状态**，仅置 `trade_order.after_sale=1`（订单保持原 2/3/4，ship/confirm/cancel 加 after_sale 守卫拦截），拒绝时直接回退 `after_sale=0` 买家可重试（无需存储原状态）；同意时订单取消（复用 cancel() 写 cancel_reason "售后退款：xxx"）+ 书籍 2/3→1 释放回在售（updateStatusIfEquals 两次兜底）+ 复用 refundPayment() 原路退款 + after_sale=3 + 售后单 CAS 置终态（refund.status 1→4/3，handler_id 记管理员，WHERE status=1 防并发重复处理）；售后类型按订单状态校验（待发货仅仅退款、待收货/已完成仅退货退款），金额必须 >0（赠送 0 元单不可退）；refund 表**无待处理唯一索引**，幂等靠 selectPendingByOrderId 查 status=1 + after_sale 守卫双保险；RefundVO 联表订单/书/申请人(昵称回退用户名)/处理人，refund.id 处理用 `PUT /admin/refunds/{id}/handle`，列表 keyword 匹配订单号/书名/申请人用户名
+- 2026-08-19：阶段六 swap 设计——**独立 `swap` 表不塞进 trade_order**（交换是双书 + 协商 + 双向发货/确认，与单书线性订单状态机本质不同）；状态机 1 待对方同意 / 2 已同意待发货 / 3 交换中 / 4 已完成 / 5 已取消 / 6 已拒绝，**发货/确认不做冗余列**，用 initiator/receiver 各自 shipped_at/confirmed_at 时间戳记录，`markBothShipped`/`markBothConfirmed` 用「状态 + 双方时间戳」条件 CAS 原子推进（幂等，仅当双方都满足时生效，天然防并发且 credit 只在 2→4 那刻发一次）；取消仅在 1/2 且本人未发货（已发货的书保持已售出，releaseBoth 用 updateStatusIfEquals 2→1 只释放未发货书）；同意时接收方填收书地址（accept CAS status=1→2 + 记 receiver_ship_type/address）；发起时双书 CAS 在售→已预订，任一步失败事务回滚；book 表复用 trade_type=3 交换（发起人可用**任意**在售书 B 换，不限 tradeType）；互评/管理后台展示**本批不做**（仅 TRADE_SUCCESS +2）；`GET /books/mine` 需登录，SecurityConfig 须在 `GET /books/**` permitAll **之前**匹配（字面量 /mine 优先于 /{id}）
 
 ## 阻塞/风险
 - Redis 未安装，缓存/验证码/Token 黑名单需先安装（降级方案见 plan.md 风险表）

@@ -58,6 +58,13 @@ public class BookService {
         return list(null, null, null, null, "credit", 1, size).getList();
     }
 
+    /** 我发布的书籍分页（status 可选过滤，如交换发起选在售书） */
+    public PageResult<BookVO> mine(Integer status, int page, int size, Long userId) {
+        PageHelper.startPage(page, size);
+        List<BookVO> list = bookMapper.selectMinePage(userId, status);
+        return PageResult.of(new PageInfo<>(list));
+    }
+
     /** 首页最新上架：最新在售书 top N */
     public List<BookVO> latest(int size) {
         return list(null, null, null, null, "latest", 1, size).getList();

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookcycle.mapper.SwapMapper">
+
+    <!-- SwapVO 显式映射（枚举码在 SQL 映射为中文；时间列显式 javaType） -->
+    <resultMap id="SwapVOMap" type="com.bookcycle.vo.SwapVO">
+        <id property="id" column="id"/>
+        <result property="swapNo" column="swap_no"/>
+        <result property="status" column="statusText"/>
+        <result property="statusCode" column="statusCode"/>
+        <result property="initiatorId" column="initiatorId"/>
+        <result property="initiatorName" column="initiatorName"/>
+        <result property="receiverId" column="receiverId"/>
+        <result property="receiverName" column="receiverName"/>
+        <result property="bookId" column="bookId"/>
+        <result property="bookTitle" column="bookTitle"/>
+        <result property="bookAuthor" column="bookAuthor"/>
+        <result property="offerBookId" column="offerBookId"/>
+        <result property="offerBookTitle" column="offerBookTitle"/>
+        <result property="offerBookAuthor" column="offerBookAuthor"/>
+        <result property="message" column="message"/>
+        <result property="initiatorShipType" column="initiatorShipType"/>
+        <result property="initiatorShipTypeCode" column="initiatorShipTypeCode"/>
+        <result property="receiverShipType" column="receiverShipType"/>
+        <result property="receiverShipTypeCode" column="receiverShipTypeCode"/>
+        <result property="initiatorReceiverName" column="initiatorReceiverName"/>
+        <result property="initiatorReceiverPhone" column="initiatorReceiverPhone"/>
+        <result property="initiatorReceiverAddress" column="initiatorReceiverAddress"/>
+        <result property="receiverReceiverName" column="receiverReceiverName"/>
+        <result property="receiverReceiverPhone" column="receiverReceiverPhone"/>
+        <result property="receiverReceiverAddress" column="receiverReceiverAddress"/>
+        <result property="initiatorShippedAt" column="initiator_shipped_at" javaType="java.time.LocalDateTime"/>
+        <result property="receiverShippedAt" column="receiver_shipped_at" javaType="java.time.LocalDateTime"/>
+        <result property="initiatorConfirmedAt" column="initiator_confirmed_at" javaType="java.time.LocalDateTime"/>
+        <result property="receiverConfirmedAt" column="receiver_confirmed_at" javaType="java.time.LocalDateTime"/>
+        <result property="cancelReason" column="cancelReason"/>
+        <result property="createTime" column="create_time" javaType="java.time.LocalDateTime"/>
+        <result property="updateTime" column="update_time" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <!-- 交换单 VO 列：联表 书 A/书 B/双方昵称(缺省回退 username)/双方收货地址 -->
+    <sql id="swapVoColumns">
+        SELECT s.id, s.swap_no, s.status AS statusCode,
+               CASE s.status WHEN 1 THEN '待对方同意' WHEN 2 THEN '已同意待发货' WHEN 3 THEN '交换中'
+                             WHEN 4 THEN '已完成' WHEN 5 THEN '已取消' WHEN 6 THEN '已拒绝' END AS statusText,
+               s.initiator_id AS initiatorId, COALESCE(iup.nickname, iu.username) AS initiatorName,
+               s.receiver_id AS receiverId, COALESCE(rup.nickname, ru.username) AS receiverName,
+               s.book_id AS bookId, ba.title AS bookTitle, ba.author AS bookAuthor,
+               s.offer_book_id AS offerBookId, bb.title AS offerBookTitle, bb.author AS offerBookAuthor,
+               s.message,
+               s.initiator_ship_type AS initiatorShipTypeCode,
+               CASE s.initiator_ship_type WHEN 1 THEN '邮寄' WHEN 2 THEN '自提' END AS initiatorShipType,
+               s.receiver_ship_type AS receiverShipTypeCode,
+               CASE s.receiver_ship_type WHEN 1 THEN '邮寄' WHEN 2 THEN '自提' END AS receiverShipType,
+               ia.receiver_name AS initiatorReceiverName, ia.phone AS initiatorReceiverPhone,
+               CONCAT(ia.province, ia.city, ia.district, ia.detail) AS initiatorReceiverAddress,
+               ra.receiver_name AS receiverReceiverName, ra.phone AS receiverReceiverPhone,
+               CONCAT(ra.province, ra.city, ra.district, ra.detail) AS receiverReceiverAddress,
+               s.initiator_shipped_at, s.receiver_shipped_at,
+               s.initiator_confirmed_at, s.receiver_confirmed_at,
+               s.cancel_reason AS cancelReason,
+               s.create_time, s.update_time
+        FROM `swap` s
+        JOIN book ba ON s.book_id = ba.id AND ba.deleted = 0
+        JOIN book bb ON s.offer_book_id = bb.id AND bb.deleted = 0
+        JOIN sys_user iu ON s.initiator_id = iu.id AND iu.deleted = 0
+        LEFT JOIN user_profile iup ON iu.id = iup.user_id AND iup.deleted = 0
+        JOIN sys_user ru ON s.receiver_id = ru.id AND ru.deleted = 0
+        LEFT JOIN user_profile rup ON ru.id = rup.user_id AND rup.deleted = 0
+        LEFT JOIN address ia ON s.initiator_address_id = ia.id AND ia.deleted = 0
+        LEFT JOIN address ra ON s.receiver_address_id = ra.id AND ra.deleted = 0
+        WHERE s.deleted = 0
+    </sql>
+
+    <select id="selectVOBySwapNo" resultMap="SwapVOMap">
+        <include refid="swapVoColumns"/>
+        AND s.swap_no = #{swapNo}
+    </select>
+
+    <select id="selectPage" resultMap="SwapVOMap">
+        <include refid="swapVoColumns"/>
+        <choose>
+            <when test="role == 'receiver'">AND s.receiver_id = #{userId}</when>
+            <otherwise>AND s.initiator_id = #{userId}</otherwise>
+        </choose>
+        <if test="status != null">AND s.status = #{status}</if>
+        ORDER BY s.create_time DESC
+    </select>
+</mapper>
