@@ -2,13 +2,15 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, ArrowDown, Bell } from '@element-plus/icons-vue'
+import { Search, ArrowDown, Bell, ChatDotRound } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
+import { useMessageStore } from '@/stores/message'
 import { fetchUnreadCount } from '@/api/notification'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const messageStore = useMessageStore()
 const isActive = (to: string) => (to === '/' ? route.path === '/' : route.path.startsWith(to))
 
 const query = ref('')
@@ -18,6 +20,7 @@ let unreadTimer: ReturnType<typeof setInterval> | undefined
 async function refreshUnread() {
   if (!authStore.isLoggedIn) {
     unreadCount.value = 0
+    messageStore.unread = 0
     return
   }
   try {
@@ -25,6 +28,7 @@ async function refreshUnread() {
   } catch {
     /* 非关键，忽略 */
   }
+  messageStore.refresh()
 }
 
 watch(
@@ -46,6 +50,7 @@ onUnmounted(() => {
 async function onLogout() {
   await authStore.logout()
   unreadCount.value = 0
+  messageStore.unread = 0
   ElMessage.success('已退出登录')
   if (route.path === '/profile' || route.path === '/publish') router.push('/')
 }
@@ -93,6 +98,10 @@ const navs = [
         <router-link v-if="authStore.isLoggedIn" to="/notifications" class="bell" :title="unreadCount ? `${unreadCount} 条未读` : '消息通知'">
           <el-icon :size="20"><Bell /></el-icon>
           <span v-if="unreadCount" class="bell__badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+        </router-link>
+        <router-link v-if="authStore.isLoggedIn" to="/friends" class="bell" :title="messageStore.unread ? `${messageStore.unread} 条未读私信` : '好友私信'">
+          <el-icon :size="20"><ChatDotRound /></el-icon>
+          <span v-if="messageStore.unread" class="bell__badge">{{ messageStore.unread > 99 ? '99+' : messageStore.unread }}</span>
         </router-link>
         <router-link v-if="!authStore.isLoggedIn" to="/login" class="login-btn">
           <el-button type="primary" round>登录 / 注册</el-button>

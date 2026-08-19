@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import { Search, ChatDotRound } from '@element-plus/icons-vue'
 import {
   searchUsers,
   fetchFriends,
@@ -13,7 +13,11 @@ import {
   addBlacklist,
   removeBlacklist,
 } from '@/api/social'
+import { sendMessage, fetchHistory, markPeerRead, fetchMessageUnreadSummary } from '@/api/message'
 import type { UserBrief, Friend, FriendRequestItem, BlacklistItem } from '@/types/social'
+import type { MessageItem } from '@/types/message'
+import { useMessageStore } from '@/stores/message'
+import { useAuthStore } from '@/stores/auth'
 
 type TabKey = 'friends' | 'requests' | 'blacklist'
 
@@ -32,6 +36,20 @@ const pendingCount = computed(() => requests.value.filter((r) => r.status === 0)
 const friendIds = computed(() => new Set(friends.value.map((f) => f.userId)))
 const blackIds = computed(() => new Set(blacklist.value.map((b) => b.userId)))
 
+// 好友私信
+const messageStore = useMessageStore()
+const authStore = useAuthStore()
+const meId = computed(() => authStore.user?.id)
+const unreadMap = ref<Record<number, number>>({})
+const drawerOpen = ref(false)
+const activeFriend = ref<Friend | null>(null)
+const messages = ref<MessageItem[]>([])
+const draft = ref('')
+const sending = ref(false)
+const msgLoading = ref(false)
+const msgListEl = ref<HTMLElement>()
+let pollTimer: ReturnType<typeof setInterval> | undefined
+
 async function load() {
   loading.value = true
   try {
@@ -42,6 +60,7 @@ async function load() {
   } finally {
     loading.value = false
   }
+  refreshUnread()
 }
 
 function isFriend(id: number) {
@@ -129,9 +148,110 @@ async function onUnblack(b: BlacklistItem) {
   }
 }
 
+// ---------- 好友私信 ----------
+async function refreshUnread() {
+  try {
+    const list = await fetchMessageUnreadSummary()
+    unreadMap.value = {}
+    for (const p of list) unreadMap.value[p.userId] = p.unreadCount
+    messageStore.refresh()
+  } catch {
+    /* 非关键，忽略 */
+  }
+}
+
+function unreadOf(f: Friend) {
+  return unreadMap.value[f.userId] || 0
+}
+
+function scrollToBottom() {
+  nextTick(() => {
+    if (msgListEl.value) msgListEl.value.scrollTop = msgListEl.value.scrollHeight
+  })
+}
+
+async function openChat(f: Friend) {
+  activeFriend.value = f
+  drawerOpen.value = true
+  msgLoading.value = true
+  try {
+    messages.value = await fetchHistory(f.userId)
+    // 打开即视为已读
+    await markPeerRead(f.userId)
+    delete unreadMap.value[f.userId]
+    messageStore.refresh()
+    scrollToBottom()
+  } finally {
+    msgLoading.value = false
+  }
+  startPoll()
+}
+
+function stopPoll() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = undefined
+  }
+}
+
+function startPoll() {
+  stopPoll()
+  pollTimer = setInterval(async () => {
+    const peer = activeFriend.value
+    if (!peer || !drawerOpen.value) return
+    try {
+      const list = await fetchHistory(peer.userId)
+      if (list.length !== messages.value.length) {
+        messages.value = list
+        scrollToBottom()
+      }
+      // 正在看会话，对方新消息自动标记已读
+      await markPeerRead(peer.userId)
+      messageStore.refresh()
+    } catch {
+      /* 非关键，忽略 */
+    }
+  }, 5000)
+}
+
+function onDrawerClose() {
+  stopPoll()
+  activeFriend.value = null
+  messages.value = []
+  draft.value = ''
+  refreshUnread()
+}
+
+async function onChatSend() {
+  const peer = activeFriend.value
+  const content = draft.value.trim()
+  if (!peer || !content) return
+  sending.value = true
+  try {
+    await sendMessage(peer.userId, content)
+    messages.value.push({
+      id: Date.now(),
+      senderId: meId.value!,
+      receiverId: peer.userId,
+      content,
+      isRead: 1,
+      createTime: new Date().toISOString(),
+    })
+    draft.value = ''
+    scrollToBottom()
+  } catch (e) {
+    ElMessage.error((e as Error).message || '发送失败')
+  } finally {
+    sending.value = false
+  }
+}
+
+const formatTime = (t: string) => t.slice(11, 16)
+
 const statusLabel = (s: number) => (s === 0 ? '待处理' : s === 1 ? '已同意' : '已拒绝')
 
 onMounted(load)
+onUnmounted(stopPoll)
 </script>
 
 <template>
@@ -202,10 +322,14 @@ onMounted(load)
             <div v-for="f in friends" :key="f.id" class="row">
               <span class="row__avatar">{{ (f.nickname || f.username).slice(0, 1) }}</span>
               <div class="row__info">
-                <p class="row__name">{{ f.nickname || f.username }}</p>
+                <p class="row__name">
+                  {{ f.nickname || f.username }}
+                  <span v-if="unreadOf(f)" class="row__msg-badge">{{ unreadOf(f) }}</span>
+                </p>
                 <p class="row__meta">@{{ f.username }} · 信誉 {{ f.credit }}</p>
               </div>
               <div class="row__actions">
+                <el-button size="small" round :icon="ChatDotRound" type="primary" @click="openChat(f)">发消息</el-button>
                 <el-button size="small" round text @click="onBlacklist({ id: f.userId, username: f.username, nickname: f.nickname, credit: f.credit })">
                   拉黑
                 </el-button>
@@ -252,6 +376,43 @@ onMounted(load)
           <div v-else-if="!loading" class="panel__empty">黑名单为空</div>
         </div>
       </div>
+
+      <!-- 好友聊天抽屉 -->
+      <el-drawer
+        v-model="drawerOpen"
+        :title="activeFriend ? `与 ${activeFriend.nickname || activeFriend.username} 的对话` : ''"
+        size="420px"
+        :with-header="true"
+        @close="onDrawerClose"
+      >
+        <div ref="msgListEl" v-loading="msgLoading" class="chat">
+          <div v-if="messages.length" class="chat__body">
+            <div
+              v-for="m in messages"
+              :key="m.id"
+              class="chat__row"
+              :class="{ 'chat__row--me': m.senderId === meId }"
+            >
+              <div class="chat__bubble" :class="{ 'chat__bubble--me': m.senderId === meId }">{{ m.content }}</div>
+              <span class="chat__time">{{ formatTime(m.createTime) }}</span>
+            </div>
+          </div>
+          <div v-else-if="!msgLoading" class="chat__empty">开始和 TA 打个招呼吧</div>
+        </div>
+        <div class="chat__input">
+          <el-input
+            v-model="draft"
+            type="textarea"
+            :rows="2"
+            maxlength="500"
+            show-word-limit
+            placeholder="输入消息…"
+            resize="none"
+            @keydown.enter.exact.prevent="onChatSend"
+          />
+          <el-button type="primary" :loading="sending" @click="onChatSend">发送</el-button>
+        </div>
+      </el-drawer>
     </div>
   </section>
 </template>
@@ -466,6 +627,87 @@ onMounted(load)
   &__status {
     font-size: 0.82rem;
     color: var(--muted);
+  }
+
+  &__msg-badge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 16px;
+    height: 16px;
+    margin-left: 6px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #d9534f;
+    color: #fff;
+    font-size: 0.72rem;
+    vertical-align: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.chat {
+  height: min(56vh, 420px);
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+  background: var(--paper);
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+
+  &__row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 80%;
+
+    &--me {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+  }
+
+  &__bubble {
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    word-break: break-word;
+
+    &--me {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+  }
+
+  &__time {
+    margin-top: 2px;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  &__empty {
+    text-align: center;
+    padding: var(--sp-6) 0;
+    color: var(--muted);
+  }
+}
+
+.chat__input {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-end;
+  margin-top: var(--sp-3);
+
+  .el-button {
+    flex-shrink: 0;
   }
 }
 

@@ -373,6 +373,19 @@ CREATE TABLE IF NOT EXISTS `swap` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='交换单表';
 
+-- 20.2 好友私信表（好友间一对一私信，仅双方可见；纯追加，未读标记）
+CREATE TABLE IF NOT EXISTS `message` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `sender_id` BIGINT UNSIGNED NOT NULL COMMENT '发送人用户ID',
+  `receiver_id` BIGINT UNSIGNED NOT NULL COMMENT '接收人用户ID',
+  `content` VARCHAR(500) NOT NULL COMMENT '消息内容',
+  `is_read` TINYINT NOT NULL DEFAULT 0 COMMENT '是否已读：1 已读 / 0 未读',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发送时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_sender_receiver` (`sender_id`, `receiver_id`, `id`),
+  KEY `idx_receiver_read` (`receiver_id`, `is_read`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='好友私信表';
+
 -- ============================================================
 -- 五、信誉与通知
 -- ============================================================
