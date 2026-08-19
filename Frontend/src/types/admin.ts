@@ -143,3 +143,26 @@ export interface StatsTrend {
   orderCount: number
   userCount: number
 }
+
+/** 管理后台售后/退款申请（RefundVO） */
+export interface AdminRefund {
+  id: number
+  orderId: number
+  orderNo: string
+  bookId: number
+  bookTitle: string
+  amount: number
+  /** 仅退款 / 退货退款 */
+  type: string
+  typeCode: number
+  reason?: string
+  /** 待处理 / 同意 / 拒绝 / 已完成 */
+  status: string
+  statusCode: number
+  applicantId: number
+  applicantName: string
+  handlerName?: string
+  handleResult?: string
+  createTime: string
+  handleTime?: string
+}

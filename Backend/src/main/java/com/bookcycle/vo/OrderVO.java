@@ -38,6 +38,8 @@ public class OrderVO {
     /** 支付状态：0 未支付 / 1 已支付 / 2 已退款 */
     private Integer payStatus;
     private LocalDateTime payTime;
+    /** 售后状态：0 无 / 1 申请中 / 2 处理中 / 3 已完成 */
+    private Integer afterSale;
     /** 当前用户是否已评价该订单 */
     private Boolean evaluatedByMe;
     private LocalDateTime createTime;

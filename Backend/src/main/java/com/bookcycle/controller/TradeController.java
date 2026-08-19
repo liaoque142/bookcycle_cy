@@ -5,11 +5,13 @@ import com.bookcycle.common.Result;
 import com.bookcycle.dto.order.CancelOrderRequest;
 import com.bookcycle.dto.order.CreateEvaluationRequest;
 import com.bookcycle.dto.order.CreateOrderRequest;
+import com.bookcycle.dto.order.CreateRefundRequest;
 import com.bookcycle.dto.order.PayRequest;
 import com.bookcycle.security.SecurityUtils;
 import com.bookcycle.service.TradeService;
 import com.bookcycle.vo.EvaluationVO;
 import com.bookcycle.vo.OrderVO;
+import com.bookcycle.vo.RefundVO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -86,6 +88,12 @@ public class TradeController {
     @PostMapping("/{orderNo}/confirm")
     public Result<OrderVO> confirm(@PathVariable String orderNo) {
         return Result.ok(tradeService.confirm(orderNo, SecurityUtils.currentUserId()));
+    }
+
+    /** 申请售后（买家）：待发货→仅退款 / 待收货、已完成→退货退款 */
+    @PostMapping("/{orderNo}/refund")
+    public Result<RefundVO> refund(@PathVariable String orderNo, @Valid @RequestBody CreateRefundRequest req) {
+        return Result.ok(tradeService.applyRefund(orderNo, req, SecurityUtils.currentUserId()));
     }
 
     /** 交易互评（完成后各评一次，好评 ≥4 分给被评方信誉 +1） */

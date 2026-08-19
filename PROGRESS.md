@@ -1,7 +1,7 @@
 # 项目进度
 
 ## 当前阶段
-阶段五：管理后台（用户/分类/书籍/交易管理 + 数据统计 + 系统配置 + 操作日志已上线，剩退款售后）
+阶段五：管理后台全部完成（用户/分类/书籍/交易管理 + 退款售后 + 数据统计 + 系统配置 + 操作日志），下一步阶段六 swap（书友互换）
 
 ## 已完成
 - [x] 需求整合修订（plan.md：7 阶段划分、补 6 张表、信誉规则改数据驱动、错误码规范）
@@ -22,9 +22,10 @@
 - [x] 阶段五管理后台（后端第一批）：SecurityConfig 加 `.requestMatchers("/api/v1/admin/**").hasRole("admin")`（未登录 401、普通用户 403，JWT filter 已注入 ROLE_）；操作日志 operation_log（实体/Mapper/Service record+page，`@Transactional` 内同事务记录，查询接口 `GET /admin/operation-logs`）；用户管理 `GET /admin/users`（keyword/status 筛选分页）、`GET /users/{id}` 详情、`PUT /users/{id}/status`（禁管理员账号拦截、禁用后登录被拦 403）、`PUT /users/{id}/credit`（信用日志记操作人，禁调自己）；分类管理 `GET /admin/categories`（扁平组树）、`POST`、`PUT /{id}`、`DELETE /{id}`（同级同名去重、父分类存在性、删前查子分类/书籍占用）；书籍管理 `GET /admin/books`（全状态含已下架，keyword/status/tradeType/categoryId 筛选）、`PUT /{id}/status`（下架 1→4 / 上架 4→1，CAS 校验交易中不可操作）；BookVO 补 statusName（SQL CASE）；冒烟 20 项全通过（含越权 403/未登录 401/禁用登录 403/重复分类 400/交易中书下架 400/非法状态 400/缺参数 400/不存在 404），mvn test 通过，冒烟数据已清理
 - [x] 阶段五管理后台（前端）：`types/admin.ts` + `api/admin.ts`（全接口 + mock 分支）；`/admin` 嵌套路由 + `AdminLayout`（深色侧边栏 el-menu + 顶栏返回前台/退出，requiresAdmin 守卫：未登录跳登录、非 admin 回首页）；`AdminUsers` 用户管理（keyword/status 筛选 + 表格 + 详情抽屉 + 禁用/启用确认 + 调整信誉分弹窗，admin 账号禁禁用置灰）；`AdminCategories` 分类管理（扁平组树 el-table tree + 新增根/新增子/编辑/删除 + 父分类下拉、启用开关）；`AdminBooks` 书籍管理（keyword/status/交易方式/分类筛选 + 表格 + 下架/上架，交易中按钮置灰）；`AdminOperationLogs` 操作日志（action 筛选 + 分页表格）；HomeHeader 登录下拉加「管理后台」入口（仅 admin 显示）；冒烟经 vite 代理：admin 各接口 200、无 token 401、普通用户 403、分类 CRUD + 同名 400、操作日志联表记录，vue-tsc/vite build 通过，冒烟数据已清理
 - [x] 阶段五剩余第一批（交易管理/数据统计/系统配置）：**交易管理** `GET /admin/orders`（keyword 匹配订单号/书名/买卖方用户名 + status/tradeType 筛选分页，复用 orderVoColumns 加额外条件）、`GET /admin/orders/{orderNo}` 详情；**系统配置** `GET /admin/credit-rules`（7 条规则按 priority）+ `PUT /credit-rules/{id}/status`（启用/禁用，操作日志 TOGGLE_CREDIT_RULE，禁用后 CreditService.apply 自动忽略）；**数据统计** `GET /admin/stats/overview`（用户/书籍/订单/今日订单/今日新增/交易额/待处理售后）+ `GET /admin/stats/trend?days=1-30`（每日订单/新增用户按日聚合 + Java 补零对齐，独立 StatsMapper 注解聚合）；前端 `AdminOrders`（筛选表格 + 详情抽屉 + 分页）、`AdminStats`（概览卡片 + echarts 7 日趋势，core 按需引入 chunk 1.1MB→513KB）、`AdminConfig`（规则表格 + 启用/禁用开关确认）三页 + AdminLayout 菜单（购物车/趋势/设置图标）+ 路由；冒烟（overview/trend 补零/7 规则/toggle 往返/订单筛选/404/401）+ mvn test + vue-tsc/vite build + 经 vite 代理 E2E 全通过，冒烟操作日志已清理
+- [x] 阶段五剩余第二批（退款售后）：**用户侧** `POST /orders/{orderNo}/refund`（买家申请，待发货→仅退款 / 待收货、已完成→退货退款，金额校验 >0，幂等拦截重复申请，仅置 trade_order.after_sale=1 订单状态不变，ship/confirm/cancel 三处 after_sale 守卫拦截，通知卖家）；**管理后台** `GET /admin/refunds`（keyword 匹配订单号/书名/申请人用户名 + status/type 筛选分页，RefundVO 联表订单/书/申请人/处理人）+ `PUT /admin/refunds/{id}/handle`（agree 同意→订单取消+cancel_reason、书籍 2/3→1 释放回在售、已支付自动退款、after_sale=3、售后单已完成；拒绝→仅回退 after_sale=0 买家可重试；操作日志 REFUND_HANDLE + 通知双方/买家）；OrderVO/orderVoColumns 补 afterSale 字段；前端 `AdminRefunds` 页（筛选表格 + 处理弹窗 同意/拒绝 + 处理说明 + 分页）+ AdminLayout 菜单（售后管理 Service 图标）+ 路由；冒烟（申请/守卫/拒绝重试/同意释放书籍退款/退货退款路径/边界 400/401/403/重复处理）全通过 + mvn test + vue-tsc/vite build + 经 vite 代理 E2E 全通过，冒烟数据已清理
 
 ## 进行中
-- [ ] 阶段五剩余（退款售后：需先补用户侧申请退款接口 `POST /orders/{orderNo}/refund` + 管理后台 refund 列表/处理）→ 阶段六 swap（书友互换）→ 阶段七 测试与部署（Redis/Docker/Nginx 需先安装）
+- [ ] 阶段六 swap（书友互换）→ 阶段七 测试与部署（Redis/Docker/Nginx 需先安装）
 
 ## 待办（阶段一，按序）
 - [x] 最小闭环（认证 + Book）：后端 + 前端接通真实接口均完成
@@ -49,6 +50,7 @@
 - 2026-08-19：社交设计——好友关系**双向各一行**（uk(user_id,friend_id) 允许 A,B 与 B,A 并存），建立用 `INSERT ... ON DUPLICATE KEY UPDATE status=1`（逻辑删除的旧行可恢复），删除双向 `UPDATE status=0`；好友申请仅新增（历史留痕），重复待处理申请幂等拦截，已同意/已是好友/双向拉黑均拦截；黑名单**双向阻断**（任一方向拉黑即拦截好友申请与下单，countBlackBetween 在 FriendService.sendRequest + TradeService.createOrder 校验），拉黑自动解除双方好友；通知 type 1系统/2交易/3好友，交易全流程触发（下单/支付/发货/收货/取消/评价），NotificationService 供各模块调用；书籍讨论顶级 + 子回复**分两次查询 Service 端按 parentId 组装**（避免 XML collection 嵌套映射）；搜索接口手写 LIMIT 20（业务上限非分页）。**⚠️ 冒烟断言坑：BusinessException 走 HTTP 200 + Result.code（GlobalExceptionHandler 不设 HTTP 状态码），断言用 body.code 而非 HTTP 状态；逻辑删除 user_profile 后 uk_nickname 唯一索引仍被旧行占用导致同名昵称重注册事务回滚，冒烟昵称需唯一后缀或清理用物理删除**
 - 2026-08-19：管理后台设计——**admin 路由用 SecurityConfig `.hasRole("admin")`**（JWT filter 已注入 `ROLE_<role>` 权限，未登录 401、普通用户 403 均走现有 handler）；操作日志**不做 AOP**（pom 无 aspectj，遵循现有 Service 风格），用 OperationLogService.record() 在各 Admin Service `@Transactional` 内与业务同事务调用；用户禁用/信誉调整**禁止作用于 admin 账号**（防锁死），禁调自己信誉分；分类逻辑删除前校验子分类/书籍占用；书籍下架/上架用已有 `updateStatusIfEquals` CAS（1→4 / 4→1），交易中（2/3）不可操作；BookVO 增 statusName（CASE 中文）供管理列表展示
 - 2026-08-19：阶段五剩余第一批设计——交易订单管理**只读**（keyword 匹配订单号/书名/买卖方用户名，复用 `orderVoColumns` SQL fragment + 额外条件，读操作不记操作日志）；信誉规则数据驱动开关（`PUT /credit-rules/{id}/status`，禁用后 CreditService.apply 自动忽略，无需改业务代码）；统计聚合 SQL 走**独立 StatsMapper 注解**（简单聚合不进 XML），trend 用 MySQL `DATE_FORMAT` 按日聚合 + Java 侧补零对齐（避免日期脊柱 SQL）；前端 echarts 用 **core 按需引入**（LineChart + Grid/Tooltip/Legend + CanvasRenderer），AdminStats chunk 1.1MB→513KB，路由懒加载
+- 2026-08-19：退款售后设计——申请**不改订单状态**，仅置 `trade_order.after_sale=1`（订单保持原 2/3/4，ship/confirm/cancel 加 after_sale 守卫拦截），拒绝时直接回退 `after_sale=0` 买家可重试（无需存储原状态）；同意时订单取消（复用 cancel() 写 cancel_reason "售后退款：xxx"）+ 书籍 2/3→1 释放回在售（updateStatusIfEquals 两次兜底）+ 复用 refundPayment() 原路退款 + after_sale=3 + 售后单 CAS 置终态（refund.status 1→4/3，handler_id 记管理员，WHERE status=1 防并发重复处理）；售后类型按订单状态校验（待发货仅仅退款、待收货/已完成仅退货退款），金额必须 >0（赠送 0 元单不可退）；refund 表**无待处理唯一索引**，幂等靠 selectPendingByOrderId 查 status=1 + after_sale 守卫双保险；RefundVO 联表订单/书/申请人(昵称回退用户名)/处理人，refund.id 处理用 `PUT /admin/refunds/{id}/handle`，列表 keyword 匹配订单号/书名/申请人用户名
 
 ## 阻塞/风险
 - Redis 未安装，缓存/验证码/Token 黑名单需先安装（降级方案见 plan.md 风险表）

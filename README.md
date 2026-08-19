@@ -10,7 +10,7 @@
 
 ## 当前可运行功能
 
-> 当前为**阶段一 ~ 阶段五**：认证 + 最小闭环（注册 → 发布书籍 → 详情 → 浏览）+ 论坛（发帖/评论/点赞）+ 交易与信誉（下单/模拟支付/地址/互评/信誉分）+ 社交（好友/拉黑/书籍讨论/通知）+ 管理后台（用户/分类/书籍/交易管理 + 数据统计 + 系统配置 + 操作日志）。
+> 当前为**阶段一 ~ 阶段五**：认证 + 最小闭环（注册 → 发布书籍 → 详情 → 浏览）+ 论坛（发帖/评论/点赞）+ 交易与信誉（下单/模拟支付/地址/互评/信誉分）+ 社交（好友/拉黑/书籍讨论/通知）+ 管理后台（用户/分类/书籍/交易管理 + 退款售后 + 数据统计 + 系统配置 + 操作日志）。
 
 | 模块 | 功能 | 接口 / 入口 |
 |---|---|---|
@@ -21,10 +21,11 @@
 | 地址 | 收货地址增删改查 + 设默认（需登录，首条自动默认） | `GET\|POST /api/v1/addresses`、`PUT\|DELETE /{id}`、`PUT /{id}/default` |
 | 交易 | 下单（出售/免费赠送，邮寄/自提，CAS 防超卖）、模拟支付、卖家发货、买家确认收货、取消（已支付自动退款） | `POST /api/v1/orders`、`POST /orders/{orderNo}/pay\|ship\|confirm\|cancel`、`GET /orders`、`GET /orders/{orderNo}` |
 | 交易评价 | 订单完成后买卖双方互评（1-5 分，好评 ≥4 分给被评方信誉 +1） | `POST /orders/{orderNo}/evaluate`、`GET /orders/{orderNo}/evaluations` |
+| 退款售后 | 买家申请售后（待发货仅退款 / 待收货、已完成退货退款，申请期间冻结发货/收货/取消），管理后台同意退款（订单取消 + 书籍释放回在售 + 原路退款）/ 拒绝退款 | `POST /orders/{orderNo}/refund`、`GET /api/v1/admin/refunds`、`PUT /admin/refunds/{id}/handle` |
 | 信誉 | 数据驱动规则（成功交易 +2、获得好评 +1、恶意取消 -3 等，seed 7 条可配置）、变动日志 | `GET /api/v1/credit/me`、`GET /api/v1/credit/logs` |
 | 社交 | 用户搜索、好友申请/同意/拒绝/删除、拉黑（双向阻断 + 自动解除好友）、书籍讨论区（树形）、通知（交易/好友触发，铃铛未读） | `GET /api/v1/friends/search`、`GET|POST /friends`、`POST /friends/requests`、`PUT /friends/requests/{id}`、`DELETE /friends/{userId}`、`GET\|POST /api/v1/blacklist`、`DELETE /blacklist/{userId}`、`GET|POST /api/v1/books/{id}/discussions`、`DELETE /discussions/{discId}`、`GET /api/v1/notifications`、`GET /unread-count`、`PUT /{id}/read`、`PUT /read-all` |
-| 管理后台（仅 admin，未登录 401 / 非管理员 403） | 用户管理：分页筛选/详情/禁用启用/调整信誉分（credit_log 记操作人）；分类管理：增删改查（同级同名去重、删前校验子分类/书籍占用）；书籍管理：全状态列表/下架/上架（交易中不可操作）；交易管理：全量订单查询/详情/多维筛选；数据统计：概览指标（用户/书籍/订单/交易额/售后）+ 7 日趋势；系统配置：信誉规则启用/禁用；操作日志查询 | `/api/v1/admin/users`、`/categories`、`/books`、`/orders`、`/stats/*`、`/credit-rules`、`/operation-logs` |
-| 前端页面 | 首页、书市列表、书籍详情、登录/注册、发布书籍、个人中心、论坛、帖子详情、收货地址、我的订单、信誉记录、好友、通知、关于页、404、管理后台（/admin：用户/分类/书籍/交易/统计/配置/操作日志） | 前端路由（见下） |
+| 管理后台（仅 admin，未登录 401 / 非管理员 403） | 用户管理：分页筛选/详情/禁用启用/调整信誉分（credit_log 记操作人）；分类管理：增删改查（同级同名去重、删前校验子分类/书籍占用）；书籍管理：全状态列表/下架/上架（交易中不可操作）；交易管理：全量订单查询/详情/多维筛选；退款售后：售后列表/同意退款/拒绝退款；数据统计：概览指标（用户/书籍/订单/交易额/售后）+ 7 日趋势；系统配置：信誉规则启用/禁用；操作日志查询 | `/api/v1/admin/users`、`/categories`、`/books`、`/orders`、`/refunds`、`/stats/*`、`/credit-rules`、`/operation-logs` |
+| 前端页面 | 首页、书市列表、书籍详情、登录/注册、发布书籍、个人中心、论坛、帖子详情、收货地址、我的订单、信誉记录、好友、通知、关于页、404、管理后台（/admin：用户/分类/书籍/交易/售后/统计/配置/操作日志） | 前端路由（见下） |
 
 - 前端当前**默认 mock 数据**（`Frontend/src/data/`），切真实后端：`VITE_API_MOCK=false`。
 - 后端 API 文档（Swagger）：`http://localhost:8080/swagger-ui.html`

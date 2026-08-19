@@ -25,6 +25,7 @@
         <result property="cancelReason" column="cancelReason"/>
         <result property="payStatus" column="payStatus"/>
         <result property="payTime" column="payTime" javaType="java.time.LocalDateTime"/>
+        <result property="afterSale" column="afterSale"/>
         <result property="evaluatedByMe" column="evaluatedByMe"/>
         <result property="createTime" column="create_time" javaType="java.time.LocalDateTime"/>
         <result property="updateTime" column="update_time" javaType="java.time.LocalDateTime"/>
@@ -46,6 +47,7 @@
                CONCAT(a.province, a.city, a.district, a.detail) AS receiverAddress,
                o.cancel_reason AS cancelReason,
                p.pay_status AS payStatus, p.pay_time AS payTime,
+               o.after_sale AS afterSale,
                o.create_time, o.update_time,
                (SELECT COUNT(*) FROM trade_evaluation te
                  WHERE te.order_id = o.id AND te.evaluator_id = #{currentUserId}) &gt; 0 AS evaluatedByMe

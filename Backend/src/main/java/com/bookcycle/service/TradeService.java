@@ -4,9 +4,11 @@ import com.bookcycle.common.PageResult;
 import com.bookcycle.dto.order.CancelOrderRequest;
 import com.bookcycle.dto.order.CreateEvaluationRequest;
 import com.bookcycle.dto.order.CreateOrderRequest;
+import com.bookcycle.dto.order.CreateRefundRequest;
 import com.bookcycle.dto.order.PayRequest;
 import com.bookcycle.entity.Book;
 import com.bookcycle.entity.Payment;
+import com.bookcycle.entity.Refund;
 import com.bookcycle.entity.SysUser;
 import com.bookcycle.entity.TradeEvaluation;
 import com.bookcycle.entity.TradeOrder;
@@ -15,10 +17,12 @@ import com.bookcycle.mapper.AddressMapper;
 import com.bookcycle.mapper.BookMapper;
 import com.bookcycle.mapper.EvaluationMapper;
 import com.bookcycle.mapper.FriendMapper;
+import com.bookcycle.mapper.RefundMapper;
 import com.bookcycle.mapper.TradeMapper;
 import com.bookcycle.mapper.UserMapper;
 import com.bookcycle.vo.EvaluationVO;
 import com.bookcycle.vo.OrderVO;
+import com.bookcycle.vo.RefundVO;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +60,7 @@ public class TradeService {
     private final AddressMapper addressMapper;
     private final EvaluationMapper evaluationMapper;
     private final FriendMapper friendMapper;
+    private final RefundMapper refundMapper;
     private final CreditService creditService;
     private final NotificationService notificationService;
 
@@ -159,6 +164,9 @@ public class TradeService {
         if (status == 6) {
             throw new BusinessException("订单售后中，无法取消");
         }
+        if (order.getAfterSale() != null && order.getAfterSale() != 0) {
+            throw new BusinessException("订单售后处理中，无法取消");
+        }
         tradeMapper.cancel(order.getId(), req.getReason());
         // 释放书籍预订，回到在售
         bookMapper.updateStatusIfEquals(order.getBookId(), BOOK_RESERVED, BOOK_ON_SALE);
@@ -182,6 +190,9 @@ public class TradeService {
         if (!order.getSellerId().equals(userId)) {
             throw new BusinessException(403, "只有卖家可以发货");
         }
+        if (order.getAfterSale() != null && order.getAfterSale() != 0) {
+            throw new BusinessException("订单售后处理中，无法发货");
+        }
         if (tradeMapper.updateStatus(order.getId(), ORDER_PENDING_SHIP, ORDER_SHIPPED) == 0) {
             throw new BusinessException("当前订单状态不可发货");
         }
@@ -195,6 +206,9 @@ public class TradeService {
     public OrderVO confirm(String orderNo, Long userId) {
         TradeOrder order = requireOrder(orderNo);
         requireBuyer(order, userId);
+        if (order.getAfterSale() != null && order.getAfterSale() != 0) {
+            throw new BusinessException("订单售后处理中，无法确认收货");
+        }
         if (tradeMapper.updateStatus(order.getId(), ORDER_SHIPPED, ORDER_COMPLETED) == 0) {
             throw new BusinessException("当前订单状态不可确认收货");
         }
@@ -234,6 +248,49 @@ public class TradeService {
         }
         notificationService.notify(targetId, NotificationService.TYPE_TRADE,
                 "您收到一条新的交易评价（订单 " + orderNo + "）");
+    }
+
+    /**
+     * 买家申请售后：待发货→仅退款 / 待收货、已完成→退货退款。
+     * 仅置 trade_order.after_sale=1（订单状态不变），后续 ship/confirm/cancel 均被守卫拦截；
+     * 管理后台处理后置回 0（拒绝）或订单取消（同意）。
+     */
+    @Transactional
+    public RefundVO applyRefund(String orderNo, CreateRefundRequest req, Long userId) {
+        TradeOrder order = requireOrder(orderNo);
+        requireBuyer(order, userId);
+        if (order.getAfterSale() != null && order.getAfterSale() != 0) {
+            throw new BusinessException("该订单已有售后申请处理中");
+        }
+        int status = order.getStatus();
+        if (status != ORDER_PENDING_SHIP && status != ORDER_SHIPPED && status != ORDER_COMPLETED) {
+            throw new BusinessException("当前订单状态不可申请售后");
+        }
+        if (order.getAmount() == null || order.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("该订单无可退款金额");
+        }
+        int type = req.getType();
+        if (status == ORDER_PENDING_SHIP && type != 1) {
+            throw new BusinessException("待发货订单仅支持仅退款");
+        }
+        if ((status == ORDER_SHIPPED || status == ORDER_COMPLETED) && type != 2) {
+            throw new BusinessException("该订单状态需选择退货退款");
+        }
+        if (refundMapper.selectPendingByOrderId(order.getId()) != null) {
+            throw new BusinessException("该订单已有售后申请处理中");
+        }
+        Refund refund = new Refund();
+        refund.setOrderId(order.getId());
+        refund.setApplicantId(userId);
+        refund.setType(type);
+        refund.setReason(req.getReason());
+        refund.setAmount(order.getAmount());
+        refund.setStatus(1);
+        refundMapper.insert(refund);
+        tradeMapper.updateAfterSale(order.getId(), 1);
+        notificationService.notify(order.getSellerId(), NotificationService.TYPE_TRADE,
+                "订单 " + orderNo + " 买家申请售后，请关注处理");
+        return refundMapper.selectVOById(refund.getId());
     }
 
     public PageResult<OrderVO> list(String role, Integer status, int page, int size, Long userId) {

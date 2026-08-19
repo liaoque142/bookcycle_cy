@@ -1,7 +1,7 @@
 import request from './request'
 import { USE_MOCK, delay, toPage } from './mock'
 import type { Page } from '@/types/api'
-import type { AdminUser, AdminCategory, AdminCategoryPayload, AdminBook, OperationLog, AdminOrder, AdminCreditRule, StatsOverview, StatsTrend } from '@/types/admin'
+import type { AdminUser, AdminCategory, AdminCategoryPayload, AdminBook, OperationLog, AdminOrder, AdminCreditRule, StatsOverview, StatsTrend, AdminRefund } from '@/types/admin'
 
 /** 管理后台：用户管理 */
 export interface AdminUserQuery {
@@ -188,4 +188,33 @@ export async function fetchAdminStatsTrend(days = 7): Promise<StatsTrend[]> {
     return []
   }
   return (await request.get('/admin/stats/trend', { params: { days } })) as unknown as StatsTrend[]
+}
+
+/** 管理后台：售后/退款 */
+export interface AdminRefundQuery {
+  /** 订单号 / 书名 / 申请人用户名 */
+  keyword?: string
+  /** 处理状态 1待处理/2同意/3拒绝/4已完成 */
+  status?: number
+  /** 售后类型 1仅退款/2退货退款 */
+  type?: number
+  page: number
+  size: number
+}
+
+export async function fetchAdminRefunds(q: AdminRefundQuery): Promise<Page<AdminRefund>> {
+  if (USE_MOCK) {
+    await delay(120)
+    return toPage<AdminRefund>([])
+  }
+  return (await request.get('/admin/refunds', { params: q })) as unknown as Page<AdminRefund>
+}
+
+/** 处理售后：agree=true 同意退款 / false 拒绝，result 处理说明 */
+export async function handleAdminRefund(id: number, agree: boolean, result: string): Promise<void> {
+  if (USE_MOCK) {
+    await delay(120)
+    return
+  }
+  await request.put(`/admin/refunds/${id}/handle`, { agree, result })
 }

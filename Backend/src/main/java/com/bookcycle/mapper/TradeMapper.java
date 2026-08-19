@@ -24,12 +24,19 @@ public interface TradeMapper {
     @Select("SELECT * FROM trade_order WHERE order_no = #{orderNo} AND deleted = 0")
     TradeOrder selectByOrderNo(@Param("orderNo") String orderNo);
 
+    @Select("SELECT * FROM trade_order WHERE id = #{id} AND deleted = 0")
+    TradeOrder selectById(@Param("id") Long id);
+
     /** 订单状态 CAS 原子变更（防重复操作） */
     @Update("UPDATE trade_order SET status = #{to} WHERE id = #{id} AND status = #{from}")
     int updateStatus(@Param("id") Long id, @Param("from") Integer from, @Param("to") Integer to);
 
     @Update("UPDATE trade_order SET status = 5, cancel_reason = #{reason} WHERE id = #{id}")
     int cancel(@Param("id") Long id, @Param("reason") String reason);
+
+    /** 售后状态更新：0 无 / 1 申请中 / 3 已完成 */
+    @Update("UPDATE trade_order SET after_sale = #{afterSale} WHERE id = #{id}")
+    int updateAfterSale(@Param("id") Long id, @Param("afterSale") Integer afterSale);
 
     OrderVO selectOrderVO(@Param("orderNo") String orderNo, @Param("currentUserId") Long currentUserId);
 
