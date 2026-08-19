@@ -79,3 +79,67 @@ export interface OperationLog {
   operatorName: string
   createTime: string
 }
+
+/** 管理后台订单（对应后端 OrderVO，含交易方式/状态编码） */
+export interface AdminOrder {
+  id: number
+  orderNo: string
+  bookId: number
+  bookTitle: string
+  buyerId: number
+  buyerName: string
+  sellerId: number
+  sellerName: string
+  amount: number
+  /** 出售 / 赠送 / 交换 */
+  tradeType: string
+  tradeTypeCode: number
+  /** 邮寄 / 自提 */
+  shipType: string
+  shipTypeCode: number
+  /** 待支付 / 待发货 / 待收货 / 已完成 / 已取消 / 售后中 */
+  status: string
+  statusCode: number
+  receiverName?: string
+  receiverPhone?: string
+  receiverAddress?: string
+  cancelReason?: string
+  /** 支付状态：0 未支付 / 1 已支付 / 2 已退款 */
+  payStatus?: number
+  payTime?: string
+  evaluatedByMe?: boolean
+  createTime: string
+  updateTime: string
+}
+
+/** 信誉规则（credit_rule，系统配置） */
+export interface AdminCreditRule {
+  id: number
+  ruleCode: string
+  name: string
+  triggerCondition: string
+  /** 分值（正加负扣） */
+  changeValue: number
+  priority: number
+  /** 1 启用 / 0 禁用 */
+  status: number
+}
+
+/** 管理后台统计概览 */
+export interface StatsOverview {
+  userCount: number
+  bookCount: number
+  orderCount: number
+  todayOrders: number
+  todayNewUsers: number
+  totalAmount: number
+  pendingRefund: number
+}
+
+/** 每日统计趋势（近 N 天订单数 / 新增用户数） */
+export interface StatsTrend {
+  /** yyyy-MM-dd */
+  date: string
+  orderCount: number
+  userCount: number
+}

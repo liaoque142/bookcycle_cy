@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Files, Notebook, Document, HomeFilled, SwitchButton } from '@element-plus/icons-vue'
+import { User, Files, Notebook, ShoppingCart, TrendCharts, Setting, Document, HomeFilled, SwitchButton } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
@@ -15,6 +15,9 @@ const menus = [
   { path: '/admin/users', label: '用户管理', icon: User },
   { path: '/admin/categories', label: '分类管理', icon: Files },
   { path: '/admin/books', label: '书籍管理', icon: Notebook },
+  { path: '/admin/orders', label: '交易管理', icon: ShoppingCart },
+  { path: '/admin/stats', label: '数据统计', icon: TrendCharts },
+  { path: '/admin/config', label: '系统配置', icon: Setting },
   { path: '/admin/logs', label: '操作日志', icon: Document },
 ]
 

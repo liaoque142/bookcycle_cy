@@ -1,7 +1,7 @@
 import request from './request'
 import { USE_MOCK, delay, toPage } from './mock'
 import type { Page } from '@/types/api'
-import type { AdminUser, AdminCategory, AdminCategoryPayload, AdminBook, OperationLog } from '@/types/admin'
+import type { AdminUser, AdminCategory, AdminCategoryPayload, AdminBook, OperationLog, AdminOrder, AdminCreditRule, StatsOverview, StatsTrend } from '@/types/admin'
 
 /** 管理后台：用户管理 */
 export interface AdminUserQuery {
@@ -125,4 +125,67 @@ export async function fetchAdminOperationLogs(q: AdminOperationLogQuery): Promis
     return toPage<OperationLog>([])
   }
   return (await request.get('/admin/operation-logs', { params: q })) as unknown as Page<OperationLog>
+}
+
+/** 管理后台：交易订单管理 */
+export interface AdminOrderQuery {
+  /** 订单号 / 书名 / 买卖方用户名 */
+  keyword?: string
+  /** 订单状态 1-6 */
+  status?: number
+  /** 交易方式 1出售/2赠送/3交换 */
+  tradeType?: number
+  page: number
+  size: number
+}
+
+export async function fetchAdminOrders(q: AdminOrderQuery): Promise<Page<AdminOrder>> {
+  if (USE_MOCK) {
+    await delay(120)
+    return toPage<AdminOrder>([])
+  }
+  return (await request.get('/admin/orders', { params: q })) as unknown as Page<AdminOrder>
+}
+
+export async function fetchAdminOrderDetail(orderNo: string): Promise<AdminOrder> {
+  if (USE_MOCK) {
+    await delay(120)
+    throw new Error('mock 模式无管理接口')
+  }
+  return (await request.get(`/admin/orders/${orderNo}`)) as unknown as AdminOrder
+}
+
+/** 管理后台：系统配置（信誉规则） */
+export async function fetchAdminCreditRules(): Promise<AdminCreditRule[]> {
+  if (USE_MOCK) {
+    await delay(120)
+    return []
+  }
+  return (await request.get('/admin/credit-rules')) as unknown as AdminCreditRule[]
+}
+
+/** 启用（status=1）/ 禁用（status=0）信誉规则 */
+export async function updateAdminCreditRuleStatus(id: number, status: number): Promise<void> {
+  if (USE_MOCK) {
+    await delay(120)
+    return
+  }
+  await request.put(`/admin/credit-rules/${id}/status`, { status })
+}
+
+/** 管理后台：数据统计 */
+export async function fetchAdminStatsOverview(): Promise<StatsOverview> {
+  if (USE_MOCK) {
+    await delay(120)
+    return { userCount: 0, bookCount: 0, orderCount: 0, todayOrders: 0, todayNewUsers: 0, totalAmount: 0, pendingRefund: 0 }
+  }
+  return (await request.get('/admin/stats/overview')) as unknown as StatsOverview
+}
+
+export async function fetchAdminStatsTrend(days = 7): Promise<StatsTrend[]> {
+  if (USE_MOCK) {
+    await delay(120)
+    return []
+  }
+  return (await request.get('/admin/stats/trend', { params: { days } })) as unknown as StatsTrend[]
 }

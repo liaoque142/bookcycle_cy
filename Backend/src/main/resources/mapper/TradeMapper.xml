@@ -74,4 +74,18 @@
         <if test="status != null">AND o.status = #{status}</if>
         ORDER BY o.create_time DESC
     </select>
+
+    <!-- 管理后台订单分页列表：全量订单，keyword 匹配订单号/书名/买卖方用户名 -->
+    <select id="selectAdminOrderPage" resultMap="OrderVOMap">
+        <include refid="orderVoColumns"/>
+        <if test="keyword != null and keyword != ''">
+            AND (o.order_no LIKE CONCAT('%', #{keyword}, '%')
+                 OR b.title LIKE CONCAT('%', #{keyword}, '%')
+                 OR bu.username LIKE CONCAT('%', #{keyword}, '%')
+                 OR su.username LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="status != null">AND o.status = #{status}</if>
+        <if test="tradeType != null">AND o.trade_type = #{tradeType}</if>
+        ORDER BY o.create_time DESC
+    </select>
 </mapper>

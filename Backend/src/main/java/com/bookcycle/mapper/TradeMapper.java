@@ -38,6 +38,12 @@ public interface TradeMapper {
                                   @Param("status") Integer status,
                                   @Param("currentUserId") Long currentUserId);
 
+    /** 管理后台订单分页列表（全量，keyword 匹配订单号/书名/买卖方用户名） */
+    List<OrderVO> selectAdminOrderPage(@Param("keyword") String keyword,
+                                       @Param("status") Integer status,
+                                       @Param("tradeType") Integer tradeType,
+                                       @Param("currentUserId") Long currentUserId);
+
     // ---- payment ----
 
     @Insert("INSERT INTO payment (order_id, amount, pay_method, pay_status, pay_time) " +

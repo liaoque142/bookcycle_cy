@@ -19,6 +19,16 @@ public interface CreditMapper {
     @Select("SELECT * FROM credit_rule WHERE rule_code = #{ruleCode}")
     CreditRule selectRuleByCode(@Param("ruleCode") String ruleCode);
 
+    @Select("SELECT * FROM credit_rule WHERE id = #{id}")
+    CreditRule selectRuleById(@Param("id") Long id);
+
+    @Select("SELECT * FROM credit_rule ORDER BY priority ASC")
+    List<CreditRule> selectAllRules();
+
+    /** 规则启用/禁用（数据驱动，禁用后 CreditService.apply 自动忽略） */
+    @Update("UPDATE credit_rule SET status = #{status} WHERE id = #{id}")
+    int updateRuleStatus(@Param("id") Long id, @Param("status") Integer status);
+
     /** 信誉分变动：仅钳下限 0（奖励可高于初始 100，扣除不转负） */
     @Update("UPDATE sys_user SET credit = GREATEST(credit + #{delta}, 0) WHERE id = #{userId}")
     int updateCredit(@Param("userId") Long userId, @Param("delta") Integer delta);

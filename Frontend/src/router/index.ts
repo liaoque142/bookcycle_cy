@@ -85,6 +85,24 @@ const router = createRouter({
           meta: { requiresAdmin: true },
         },
         {
+          path: 'orders',
+          name: 'admin-orders',
+          component: () => import('@/views/admin/AdminOrders.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
+          path: 'stats',
+          name: 'admin-stats',
+          component: () => import('@/views/admin/AdminStats.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
+          path: 'config',
+          name: 'admin-config',
+          component: () => import('@/views/admin/AdminConfig.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
           path: 'logs',
           name: 'admin-logs',
           component: () => import('@/views/admin/AdminOperationLogs.vue'),
