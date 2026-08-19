@@ -17,6 +17,7 @@
         <result property="condition" column="condition"/>
         <result property="description" column="description"/>
         <result property="status" column="status"/>
+        <result property="statusName" column="statusName"/>
         <result property="sellerId" column="sellerId"/>
         <result property="seller" column="seller"/>
         <result property="credit" column="credit"/>
@@ -31,6 +32,7 @@
                CASE b.trade_type WHEN 1 THEN '出售' WHEN 2 THEN '赠送' WHEN 3 THEN '交换' END AS tradeType,
                CASE b.`condition` WHEN 1 THEN '全新' WHEN 2 THEN '九成新' WHEN 3 THEN '八成新' WHEN 4 THEN '七成新及以下' END AS `condition`,
                b.description, b.status,
+               CASE b.status WHEN 1 THEN '在售' WHEN 2 THEN '已预订' WHEN 3 THEN '已售出' WHEN 4 THEN '已下架' END AS statusName,
                b.create_time,
                su.id AS sellerId, su.credit AS credit, up.nickname AS seller
         FROM book b
@@ -60,5 +62,18 @@
             <when test="sort == 'credit'">ORDER BY su.credit DESC, b.create_time DESC</when>
             <otherwise>ORDER BY b.create_time DESC</otherwise>
         </choose>
+    </select>
+
+    <!-- 管理后台书籍分页列表：全状态（含已下架），支持状态/交易方式/分类筛选 -->
+    <select id="selectAdminPage" resultMap="BookVOMap">
+        <include refid="bookVoColumns"/>
+        WHERE b.deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (b.title LIKE CONCAT('%', #{keyword}, '%') OR b.author LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="status != null">AND b.status = #{status}</if>
+        <if test="tradeType != null">AND b.trade_type = #{tradeType}</if>
+        <if test="categoryId != null">AND b.category_id = #{categoryId}</if>
+        ORDER BY b.create_time DESC
     </select>
 </mapper>

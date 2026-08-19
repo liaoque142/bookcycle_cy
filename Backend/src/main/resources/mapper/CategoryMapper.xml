@@ -11,4 +11,20 @@
         ORDER BY sort
     </select>
 
+    <!-- 管理后台全部分类（扁平列表，前端按 parent_id 组树） -->
+    <select id="selectAll" resultType="com.bookcycle.entity.Category">
+        SELECT id, parent_id, name, sort, status, create_time, update_time, deleted
+        FROM category
+        WHERE deleted = 0
+        ORDER BY parent_id, sort, id
+    </select>
+
+    <!-- 同级同名分类计数（编辑去重时 excludeId 排除自身） -->
+    <select id="countByNameAndParentExclude" resultType="int">
+        SELECT COUNT(*)
+        FROM category
+        WHERE name = #{name} AND parent_id = #{parentId} AND deleted = 0
+        <if test="excludeId != null">AND id != #{excludeId}</if>
+    </select>
+
 </mapper>

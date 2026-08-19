@@ -33,6 +33,8 @@ public class BookVO {
     private String description;
     /** 书籍状态：1 在售 / 2 已预订 / 3 已售出 / 4 已下架 */
     private Integer status;
+    /** 书籍状态中文：在售 / 已预订 / 已售出 / 已下架（SQL CASE 映射） */
+    private String statusName;
     /** 卖家ID */
     private Long sellerId;
     /** 卖家昵称（user_profile.nickname） */

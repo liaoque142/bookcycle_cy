@@ -36,4 +36,16 @@ public interface BookMapper {
     /** 书籍状态 CAS 原子变更（防超卖：在售→已预订 / 已预订→在售 / 已预订→已售出） */
     @Update("UPDATE book SET status = #{to} WHERE id = #{id} AND status = #{from}")
     int updateStatusIfEquals(@Param("id") Long id, @Param("from") Integer from, @Param("to") Integer to);
+
+    /** 分类下书籍计数（删除分类前校验） */
+    @Select("SELECT COUNT(*) FROM book WHERE category_id = #{categoryId} AND deleted = 0")
+    int countByCategoryId(@Param("categoryId") Long categoryId);
+
+    // ===== 管理后台 =====
+
+    /** 管理后台书籍分页列表（全状态，关键词/状态/交易方式/分类筛选，SQL 在 XML） */
+    List<BookVO> selectAdminPage(@Param("keyword") String keyword,
+                                 @Param("status") Integer status,
+                                 @Param("tradeType") Integer tradeType,
+                                 @Param("categoryId") Long categoryId);
 }
