@@ -16,6 +16,7 @@ import {
   removeBlacklist,
 } from '@/api/social'
 import { sendMessage, fetchHistory, markPeerRead, fetchMessageUnreadSummary } from '@/api/message'
+import { USE_MOCK } from '@/api/mock'
 import { fetchCategories, type CategoryOption } from '@/api/category'
 import ImageUploader from '@/components/common/ImageUploader.vue'
 import Avatar from '@/components/common/Avatar.vue'
@@ -237,6 +238,7 @@ function stopPoll() {
 
 function startPoll() {
   stopPoll()
+  if (USE_MOCK) return // mock 无后端：fetchHistory 返回空列表，轮询会把本地刚发的消息清空
   pollTimer = setInterval(async () => {
     const peer = activeFriend.value
     if (!peer || !drawerOpen.value) return

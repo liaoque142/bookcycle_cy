@@ -9,9 +9,9 @@ spring:
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   servlet:
     multipart:
-      # 单文件上限与请求总上限（评论/私信发图）
-      max-file-size: 5MB
-      max-request-size: 10MB
+      # 单文件上限与请求总上限（评论/私信发图）：12MB 兜底，业务按 scene 区分 10MB/5MB 由 UploadService 强制
+      max-file-size: 12MB
+      max-request-size: 20MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/bookcycle?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true

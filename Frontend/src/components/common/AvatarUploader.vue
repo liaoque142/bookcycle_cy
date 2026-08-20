@@ -16,6 +16,13 @@ const MAX_SIZE = 5 * 1024 * 1024
 const uploading = ref(false)
 const inputRef = ref<HTMLInputElement>()
 
+/** 仅接受 jpg/png：type 或扩展名任一命中即可（file.type 可能为空或非标准值） */
+function isJpgPng(file: File) {
+  const t = file.type.toLowerCase()
+  if (t === 'image/jpeg' || t === 'image/png') return true
+  return /\.(jpe?g|png)$/i.test(file.name)
+}
+
 function pick() {
   inputRef.value?.click()
 }
@@ -25,17 +32,17 @@ async function onFileChange(e: Event) {
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
-  if (!file.type.startsWith('image/')) {
-    ElMessage.warning('仅支持图片文件')
+  if (!isJpgPng(file)) {
+    ElMessage.warning('仅支持 jpg / png 格式')
     return
   }
   if (file.size > MAX_SIZE) {
-    ElMessage.warning('图片不能超过 5MB')
+    ElMessage.warning('头像图片不能超过 5MB')
     return
   }
   uploading.value = true
   try {
-    const url = await uploadImage(file)
+    const url = await uploadImage(file, 'avatar')
     emit('update:modelValue', url)
   } catch (err) {
     ElMessage.error((err as Error).message || '上传失败')
@@ -47,7 +54,7 @@ async function onFileChange(e: Event) {
 
 <template>
   <div class="avatar-uploader" :style="{ width: `${size}px`, height: `${size}px` }">
-    <input ref="inputRef" type="file" accept="image/*" class="avatar-uploader__input" @change="onFileChange" />
+    <input ref="inputRef" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" class="avatar-uploader__input" @change="onFileChange" />
     <button type="button" class="avatar-uploader__btn" :title="modelValue ? '更换头像' : '设置头像'" @click="pick">
       <Avatar :src="modelValue" :name="name" :size="size" />
       <span class="avatar-uploader__mask">

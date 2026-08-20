@@ -4,12 +4,21 @@ import { ElMessage } from 'element-plus'
 import { Picture, Close } from '@element-plus/icons-vue'
 import { uploadImage } from '@/api/upload'
 
-const props = defineProps<{ modelValue?: string }>()
+const props = withDefaults(
+  defineProps<{ modelValue?: string; maxSize?: number }>(),
+  { maxSize: 10 * 1024 * 1024 },
+)
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
-const MAX_SIZE = 5 * 1024 * 1024
 const uploading = ref(false)
 const inputRef = ref<HTMLInputElement>()
+
+/** 仅接受 jpg/png：type 或扩展名任一命中即可（file.type 可能为空或非标准值） */
+function isJpgPng(file: File) {
+  const t = file.type.toLowerCase()
+  if (t === 'image/jpeg' || t === 'image/png') return true
+  return /\.(jpe?g|png)$/i.test(file.name)
+}
 
 function pick() {
   inputRef.value?.click()
@@ -20,12 +29,12 @@ async function onFileChange(e: Event) {
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
-  if (!file.type.startsWith('image/')) {
-    ElMessage.warning('仅支持图片文件')
+  if (!isJpgPng(file)) {
+    ElMessage.warning('仅支持 jpg / png 格式')
     return
   }
-  if (file.size > MAX_SIZE) {
-    ElMessage.warning('图片不能超过 5MB')
+  if (file.size > props.maxSize) {
+    ElMessage.warning(`图片不能超过 ${props.maxSize / (1024 * 1024)}MB`)
     return
   }
   uploading.value = true
@@ -46,7 +55,7 @@ function remove() {
 
 <template>
   <div class="uploader">
-    <input ref="inputRef" type="file" accept="image/*" class="uploader__input" @change="onFileChange" />
+    <input ref="inputRef" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" class="uploader__input" @change="onFileChange" />
     <el-button v-if="!modelValue" size="small" :icon="Picture" :loading="uploading" @click="pick">
       图片
     </el-button>

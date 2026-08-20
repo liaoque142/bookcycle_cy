@@ -22,9 +22,11 @@ public class UploadController {
 
     private final UploadService uploadService;
 
-    /** 上传图片，返回 { url: "/uploads/yyyy/MM/xxx.png" } */
+    /** 上传图片，返回 { url: "/uploads/yyyy/MM/xxx.png" }；scene=message(默认,10MB)|avatar(5MB)，仅 jpg/png */
     @PostMapping("/image")
-    public Result<Map<String, String>> image(@RequestParam("file") MultipartFile file) {
-        return Result.ok(Map.of("url", uploadService.uploadImage(file)));
+    public Result<Map<String, String>> image(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "scene", required = false, defaultValue = "message") String scene) {
+        return Result.ok(Map.of("url", uploadService.uploadImage(file, scene)));
     }
 }
