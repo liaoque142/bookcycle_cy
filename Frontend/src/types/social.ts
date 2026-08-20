@@ -14,6 +14,13 @@ export interface Friend extends UserBrief {
   createTime: string
 }
 
+/** 好友详情（点击好友弹窗展示，含完整资料） */
+export interface FriendDetail extends Friend {
+  bio?: string
+  interestTags?: string
+  genreIds?: number[]
+}
+
 /** 我收到的好友申请 */
 export interface FriendRequestItem {
   id: number

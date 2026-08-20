@@ -55,6 +55,15 @@ public class UserService {
         return toUserVO(user, roleMapper.selectById(user.getRoleId()));
     }
 
+    /** 公开资料（好友详情复用）：与 me() 相同组装逻辑，含 bio/interestTags/genreIds */
+    public UserVO publicProfile(Long userId) {
+        SysUser user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        return toUserVO(user, roleMapper.selectById(user.getRoleId()));
+    }
+
     /** 更新我的资料：全字段可选，改完返回最新 UserVO 供前端同步 */
     @Transactional
     public UserVO updateProfile(Long userId, UpdateProfileRequest req) {

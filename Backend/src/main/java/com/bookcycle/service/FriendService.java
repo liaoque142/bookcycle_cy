@@ -10,6 +10,7 @@ import com.bookcycle.vo.BlacklistVO;
 import com.bookcycle.vo.FriendRequestVO;
 import com.bookcycle.vo.FriendVO;
 import com.bookcycle.vo.UserBriefVO;
+import com.bookcycle.vo.UserVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ public class FriendService {
 
     private final FriendMapper friendMapper;
     private final UserMapper userMapper;
+    private final UserService userService;
     private final NotificationService notificationService;
 
     /** 搜索书友（用户名/昵称模糊），空关键词返回空列表 */
@@ -106,6 +108,14 @@ public class FriendService {
 
     public List<FriendVO> listFriends(Long userId) {
         return friendMapper.selectFriends(userId);
+    }
+
+    /** 好友详情（仅好友可见）：校验好友关系后返回完整资料（bio/书籍喜好/信誉等） */
+    public UserVO friendDetail(Long userId, Long currentUserId) {
+        if (friendMapper.countFriend(currentUserId, userId) == 0) {
+            throw new BusinessException("对方不是你的好友");
+        }
+        return userService.publicProfile(userId);
     }
 
     /** 删除好友：双向逻辑删除 */

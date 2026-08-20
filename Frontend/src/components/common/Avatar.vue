@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = withDefaults(
   defineProps<{ src?: string; name: string; size?: number; muted?: boolean }>(),
@@ -8,6 +8,11 @@ const props = withDefaults(
 
 const broken = ref(false)
 const showImg = computed(() => !!props.src && !broken.value)
+
+// src 变化时复位 broken：否则某次加载失败后该组件实例对之后任何新头像都永久回退首字
+watch(() => props.src, () => {
+  broken.value = false
+})
 const fallback = computed(() => (props.name || '?').slice(0, 1))
 </script>
 

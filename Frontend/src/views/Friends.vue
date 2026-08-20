@@ -6,6 +6,7 @@ import { Search, ChatDotRound } from '@element-plus/icons-vue'
 import {
   searchUsers,
   fetchFriends,
+  fetchFriendDetail,
   sendFriendRequest,
   fetchFriendRequests,
   handleFriendRequest,
@@ -15,9 +16,10 @@ import {
   removeBlacklist,
 } from '@/api/social'
 import { sendMessage, fetchHistory, markPeerRead, fetchMessageUnreadSummary } from '@/api/message'
+import { fetchCategories, type CategoryOption } from '@/api/category'
 import ImageUploader from '@/components/common/ImageUploader.vue'
 import Avatar from '@/components/common/Avatar.vue'
-import type { UserBrief, Friend, FriendRequestItem, BlacklistItem } from '@/types/social'
+import type { UserBrief, Friend, FriendDetail, FriendRequestItem, BlacklistItem } from '@/types/social'
 import type { MessageItem } from '@/types/message'
 import { useMessageStore } from '@/stores/message'
 import { useAuthStore } from '@/stores/auth'
@@ -40,6 +42,15 @@ const searching = ref(false)
 const pendingCount = computed(() => requests.value.filter((r) => r.status === 0).length)
 const friendIds = computed(() => new Set(friends.value.map((f) => f.userId)))
 const blackIds = computed(() => new Set(blacklist.value.map((b) => b.userId)))
+
+// 好友信息卡片
+const detailVisible = ref(false)
+const currentDetail = ref<FriendDetail | null>(null)
+const categories = ref<CategoryOption[]>([])
+const detailGenres = computed(() => {
+  const ids = new Set(currentDetail.value?.genreIds ?? [])
+  return categories.value.filter((c) => ids.has(c.id))
+})
 
 // 好友私信
 const messageStore = useMessageStore()
@@ -162,6 +173,22 @@ async function onUnblack(b: BlacklistItem) {
   }
 }
 
+// ---------- 好友信息卡片 ----------
+async function openDetail(f: Friend) {
+  try {
+    currentDetail.value = await fetchFriendDetail(f.userId)
+    detailVisible.value = true
+  } catch (e) {
+    ElMessage.error((e as Error).message || '获取好友信息失败')
+  }
+}
+
+function goChatFromDetail() {
+  if (!currentDetail.value) return
+  detailVisible.value = false
+  openChat(currentDetail.value)
+}
+
 // ---------- 好友私信 ----------
 async function refreshUnread() {
   try {
@@ -268,7 +295,11 @@ const formatTime = (t: string) => t.slice(11, 16)
 
 const statusLabel = (s: number) => (s === 0 ? '待处理' : s === 1 ? '已同意' : '已拒绝')
 
-onMounted(load)
+onMounted(() => {
+  load()
+  // 书籍喜好多选选项（8 大分类），供好友信息卡片展示
+  fetchCategories().then((cs) => (categories.value = cs)).catch(() => {})
+})
 onUnmounted(stopPoll)
 </script>
 
@@ -338,13 +369,15 @@ onUnmounted(stopPoll)
         <div v-loading="loading" v-show="tab === 'friends'" class="panel">
           <div v-if="friends.length" class="rows">
             <div v-for="f in friends" :key="f.id" class="row">
-              <Avatar :src="f.avatar" :name="f.nickname || f.username || ''" :size="40" />
-              <div class="row__info">
-                <p class="row__name">
-                  {{ f.nickname || f.username }}
-                  <span v-if="unreadOf(f)" class="row__msg-badge">{{ unreadOf(f) }}</span>
-                </p>
-                <p class="row__meta">@{{ f.username }} · 信誉 {{ f.credit }}</p>
+              <div class="row__click" @click="openDetail(f)">
+                <Avatar :src="f.avatar" :name="f.nickname || f.username || ''" :size="40" />
+                <div class="row__info">
+                  <p class="row__name">
+                    {{ f.nickname || f.username }}
+                    <span v-if="unreadOf(f)" class="row__msg-badge">{{ unreadOf(f) }}</span>
+                  </p>
+                  <p class="row__meta">@{{ f.username }} · 信誉 {{ f.credit }}</p>
+                </div>
               </div>
               <div class="row__actions">
                 <el-button size="small" round :icon="ChatDotRound" type="primary" @click="openChat(f)">发消息</el-button>
@@ -437,6 +470,42 @@ onUnmounted(stopPoll)
           </div>
         </div>
       </el-drawer>
+
+      <!-- 好友信息卡片 -->
+      <el-dialog v-model="detailVisible" width="420px" align-center>
+        <div v-if="currentDetail" class="card">
+          <div class="card__head">
+            <Avatar :src="currentDetail.avatar" :name="currentDetail.nickname || currentDetail.username || ''" :size="56" />
+            <div class="card__info">
+              <p class="card__name">{{ currentDetail.nickname || currentDetail.username }}</p>
+              <p class="card__meta">@{{ currentDetail.username }} · 信誉 {{ currentDetail.credit }}</p>
+            </div>
+          </div>
+          <div class="card__body">
+            <div class="card__row">
+              <span class="card__label">简介</span>
+              <span class="card__value">{{ currentDetail.bio || '这个人很懒，什么都没写' }}</span>
+            </div>
+            <div class="card__row">
+              <span class="card__label">书籍喜好</span>
+              <span class="card__value">
+                <template v-if="detailGenres.length">
+                  <el-tag v-for="g in detailGenres" :key="g.id" size="small" effect="plain" round>{{ g.name }}</el-tag>
+                </template>
+                <template v-else>未设置</template>
+              </span>
+            </div>
+            <div class="card__row">
+              <span class="card__label">成为好友</span>
+              <span class="card__value">{{ currentDetail.createTime.slice(0, 10) }}</span>
+            </div>
+          </div>
+          <div class="card__foot">
+            <el-button type="primary" round :icon="ChatDotRound" @click="goChatFromDetail">发消息</el-button>
+            <el-button round @click="detailVisible = false">关闭</el-button>
+          </div>
+        </div>
+      </el-dialog>
     </div>
   </section>
 </template>
@@ -600,6 +669,21 @@ onUnmounted(stopPoll)
     border-bottom: none;
   }
 
+  &__click {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    flex: 1;
+    min-width: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: var(--paper);
+    }
+  }
+
   &__info {
     flex: 1;
     min-width: 0;
@@ -729,6 +813,72 @@ onUnmounted(stopPoll)
     .el-button {
       flex-shrink: 0;
     }
+  }
+}
+
+.card {
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+
+  &__info {
+    min-width: 0;
+  }
+
+  &__name {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  &__meta {
+    margin-top: 2px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin-top: var(--sp-5);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+
+  &__row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-3);
+    font-size: 0.9rem;
+  }
+
+  &__label {
+    flex-shrink: 0;
+    width: 72px;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  &__value {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  &__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--sp-2);
+    margin-top: var(--sp-5);
   }
 }
 

@@ -8,6 +8,7 @@ import com.bookcycle.service.FriendService;
 import com.bookcycle.vo.FriendRequestVO;
 import com.bookcycle.vo.FriendVO;
 import com.bookcycle.vo.UserBriefVO;
+import com.bookcycle.vo.UserVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -62,6 +63,12 @@ public class FriendController {
     public Result<Void> handle(@PathVariable Long id, @Valid @RequestBody HandleFriendRequest req) {
         friendService.handleRequest(id, req, SecurityUtils.currentUserId());
         return Result.ok();
+    }
+
+    /** 好友详情（仅好友可见，含简介/书籍喜好/信誉） */
+    @GetMapping("/{userId}")
+    public Result<UserVO> detail(@PathVariable Long userId) {
+        return Result.ok(friendService.friendDetail(userId, SecurityUtils.currentUserId()));
     }
 
     /** 删除好友（双向解除） */

@@ -1,6 +1,6 @@
 import request from './request'
 import { USE_MOCK, delay } from './mock'
-import type { UserBrief, Friend, FriendRequestItem, BlacklistItem } from '@/types/social'
+import type { UserBrief, Friend, FriendDetail, FriendRequestItem, BlacklistItem } from '@/types/social'
 
 /** 搜索书友（用户名/昵称模糊） */
 export async function searchUsers(keyword: string): Promise<UserBrief[]> {
@@ -18,6 +18,25 @@ export async function fetchFriends(): Promise<Friend[]> {
     return []
   }
   return (await request.get('/friends')) as unknown as Friend[]
+}
+
+/** 好友详情（仅好友可见，含简介/书籍喜好） */
+export async function fetchFriendDetail(userId: number): Promise<FriendDetail> {
+  if (USE_MOCK) {
+    await delay(120)
+    return {
+      id: userId,
+      userId,
+      username: 'mock_booker',
+      nickname: '书友小明',
+      avatar: '',
+      credit: 80,
+      createTime: '2026-01-01T10:00:00',
+      bio: '喜欢读历史与科幻',
+      genreIds: [1, 5],
+    }
+  }
+  return (await request.get(`/friends/${userId}`)) as unknown as FriendDetail
 }
 
 /** 发送好友申请 */
