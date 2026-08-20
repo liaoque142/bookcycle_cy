@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 import { Search, ArrowDown, Bell, ChatDotRound } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMessageStore } from '@/stores/message'
+import Avatar from '@/components/common/Avatar.vue'
 import { fetchUnreadCount } from '@/api/notification'
 
 const route = useRoute()
@@ -100,7 +101,7 @@ const navs = [
           <el-icon :size="20"><Bell /></el-icon>
           <span v-if="unreadCount" class="bell__badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
         </router-link>
-        <router-link v-if="authStore.isLoggedIn" to="/friends" class="bell" :title="messageStore.unread ? `${messageStore.unread} 条未读私信` : '好友私信'">
+        <router-link v-if="authStore.isLoggedIn" to="/messages" class="bell" :title="messageStore.unread ? `${messageStore.unread} 条未读私信` : '消息中心'">
           <el-icon :size="20"><ChatDotRound /></el-icon>
           <span v-if="messageStore.unread" class="bell__badge">{{ messageStore.unread > 99 ? '99+' : messageStore.unread }}</span>
         </router-link>
@@ -109,13 +110,14 @@ const navs = [
         </router-link>
         <el-dropdown v-else trigger="click" @command="onCommand">
           <button class="user-btn">
-            <span class="user-btn__avatar">{{ authStore.user?.nickname?.slice(0, 1) || authStore.user?.username.slice(0, 1) }}</span>
+            <Avatar :src="authStore.user?.avatar" :name="authStore.user?.nickname || authStore.user?.username || ''" :size="30" />
             <span class="user-btn__name">{{ authStore.user?.nickname || authStore.user?.username }}</span>
             <el-icon class="user-btn__arrow"><ArrowDown /></el-icon>
           </button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+              <el-dropdown-item command="messages">消息中心</el-dropdown-item>
               <el-dropdown-item command="friends">我的好友</el-dropdown-item>
               <el-dropdown-item command="notifications">消息通知</el-dropdown-item>
               <el-dropdown-item command="publish">发布书籍</el-dropdown-item>
@@ -284,18 +286,6 @@ const navs = [
 
   &:hover {
     box-shadow: var(--shadow-card);
-  }
-
-  &__avatar {
-    display: grid;
-    place-items: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: var(--mark);
-    color: #fff;
-    font-family: var(--font-serif);
-    font-size: 0.9rem;
   }
 
   &__name {

@@ -14,6 +14,8 @@ public class FriendRequestVO {
     private Long fromUserId;
     private String fromUsername;
     private String fromNickname;
+    /** 申请人头像（可空，前端回退首字） */
+    private String fromAvatar;
     private Integer fromCredit;
     private Long toUserId;
     /** 0 待处理 / 1 同意 / 2 拒绝 */

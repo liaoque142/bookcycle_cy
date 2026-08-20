@@ -20,6 +20,7 @@
         <result property="statusName" column="statusName"/>
         <result property="sellerId" column="sellerId"/>
         <result property="seller" column="seller"/>
+        <result property="sellerAvatar" column="sellerAvatar"/>
         <result property="credit" column="credit"/>
         <result property="createdAt" column="create_time" javaType="java.time.LocalDateTime"/>
     </resultMap>
@@ -34,7 +35,7 @@
                b.description, b.status,
                CASE b.status WHEN 1 THEN '在售' WHEN 2 THEN '已预订' WHEN 3 THEN '已售出' WHEN 4 THEN '已下架' END AS statusName,
                b.create_time,
-               su.id AS sellerId, su.credit AS credit, up.nickname AS seller
+               su.id AS sellerId, su.credit AS credit, up.nickname AS seller, up.avatar AS sellerAvatar
         FROM book b
         JOIN category c ON b.category_id = c.id AND c.deleted = 0
         JOIN sys_user su ON b.user_id = su.id AND su.deleted = 0

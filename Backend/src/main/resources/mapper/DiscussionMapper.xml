@@ -7,6 +7,7 @@
         <result property="bookId" column="bookId"/>
         <result property="userId" column="userId"/>
         <result property="author" column="author"/>
+        <result property="authorAvatar" column="authorAvatar"/>
         <result property="content" column="content"/>
         <result property="imageUrl" column="imageUrl"/>
         <result property="parentId" column="parentId"/>
@@ -16,7 +17,7 @@
     <!-- 顶级讨论：时间倒序 -->
     <select id="selectTop" resultMap="DiscussionVOMap">
         SELECT d.id, d.book_id AS bookId, d.user_id AS userId,
-               COALESCE(up.nickname, su.username) AS author, d.content, d.image_url AS imageUrl,
+               COALESCE(up.nickname, su.username) AS author, up.avatar AS authorAvatar, d.content, d.image_url AS imageUrl,
                d.parent_id AS parentId, d.create_time AS createTime
         FROM book_discussion d
         JOIN sys_user su ON d.user_id = su.id AND su.deleted = 0
@@ -28,7 +29,7 @@
     <!-- 全部子回复：时间正序，Service 端按 parentId 组装到顶级下 -->
     <select id="selectReplies" resultMap="DiscussionVOMap">
         SELECT d.id, d.book_id AS bookId, d.user_id AS userId,
-               COALESCE(up.nickname, su.username) AS author, d.content, d.image_url AS imageUrl,
+               COALESCE(up.nickname, su.username) AS author, up.avatar AS authorAvatar, d.content, d.image_url AS imageUrl,
                d.parent_id AS parentId, d.create_time AS createTime
         FROM book_discussion d
         JOIN sys_user su ON d.user_id = su.id AND su.deleted = 0

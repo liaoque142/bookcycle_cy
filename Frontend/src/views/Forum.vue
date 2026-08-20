@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Plus, ChatLineRound, Star, View } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
+import Avatar from '@/components/common/Avatar.vue'
 import { fetchForumBoards, fetchForumPosts, createForumPost } from '@/api/forum'
 import type { ForumBoard, ForumPostItem, CreateForumPostPayload } from '@/types/forum'
 
@@ -137,6 +138,7 @@ onMounted(async () => {
             </div>
             <p class="post__excerpt">{{ p.excerpt }}</p>
             <div class="post__meta">
+              <Avatar :src="p.authorAvatar" :name="p.author || ''" :size="20" />
               <span class="post__author">{{ p.author }}</span>
               <span class="post__time">{{ formatTime(p.createTime) }}</span>
             </div>
@@ -297,6 +299,7 @@ onMounted(async () => {
 
   &__meta {
     display: flex;
+    align-items: center;
     gap: var(--sp-4);
     margin-top: var(--sp-2);
     font-size: 0.8rem;

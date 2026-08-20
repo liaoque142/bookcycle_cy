@@ -20,5 +20,9 @@ public class MessageVO {
     private String imageUrl;
     /** 是否已读：1 已读 / 0 未读 */
     private Integer isRead;
+    /** 发送人昵称（缺省回退用户名） */
+    private String senderName;
+    /** 发送人头像（可空，前端回退首字） */
+    private String senderAvatar;
     private LocalDateTime createTime;
 }

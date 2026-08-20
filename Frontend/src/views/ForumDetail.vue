@@ -5,6 +5,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, ChatLineRound, Star, StarFilled, View, EditPen, Delete } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import ImageUploader from '@/components/common/ImageUploader.vue'
+import Avatar from '@/components/common/Avatar.vue'
 import {
   fetchForumBoards,
   fetchForumPostDetail,
@@ -147,6 +148,7 @@ onMounted(async () => {
             <h1 class="post-head__title">{{ post.title }}</h1>
           </div>
           <div class="post-head__meta">
+            <Avatar :src="post.authorAvatar" :name="post.author || ''" :size="24" />
             <span class="author">{{ post.author }}</span>
             <span>{{ formatTime(post.createTime) }}</span>
             <span class="stat"><el-icon><View /></el-icon> {{ post.viewCount }}</span>
@@ -191,6 +193,7 @@ onMounted(async () => {
           <ul class="comments__list">
             <li v-for="c in comments" :key="c.id" class="comment">
               <div class="comment__head">
+                <Avatar :src="c.authorAvatar" :name="c.author || ''" :size="28" />
                 <span class="comment__author">{{ c.author }}</span>
                 <span class="comment__time">{{ formatTime(c.createTime) }}</span>
               </div>

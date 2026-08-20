@@ -11,6 +11,8 @@ export interface Book {
   /** 新旧程度，如「九成新」 */
   condition: string
   seller: string
+  /** 卖家头像（可空，前端回退首字） */
+  sellerAvatar?: string
   /** 卖家信誉分 0-100 */
   credit: number
   /** 书封底色 */

@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 import { Star, StarFilled } from '@element-plus/icons-vue'
 import BookCover from '@/components/common/BookCover.vue'
 import ImageUploader from '@/components/common/ImageUploader.vue'
+import Avatar from '@/components/common/Avatar.vue'
 import { fetchBookById, fetchMyBooks } from '@/api/book'
 import { fetchAddresses } from '@/api/address'
 import { createOrder, payOrder } from '@/api/order'
@@ -344,7 +345,7 @@ onMounted(async () => {
             </div>
 
             <div class="detail__seller">
-              <span class="detail__seller-avatar">{{ book.seller.slice(0, 1) }}</span>
+              <Avatar :src="book.sellerAvatar" :name="book.seller || ''" :size="44" />
               <div>
                 <p class="detail__seller-name">{{ book.seller }}</p>
                 <p class="detail__seller-credit">信誉 {{ book.credit }}</p>
@@ -378,6 +379,7 @@ onMounted(async () => {
           <div v-if="discussions.length" class="discuss__items">
             <div v-for="d in discussions" :key="d.id" class="discuss__item">
               <div class="discuss__item-head">
+                <Avatar :src="d.authorAvatar" :name="d.author || ''" :size="28" />
                 <span class="discuss__author">{{ d.author }}</span>
                 <span class="discuss__time">{{ d.createTime.slice(0, 10) }}</span>
                 <el-button v-if="canDelete(d)" class="discuss__del" size="small" text type="danger" @click="onDelete(d)">删除</el-button>
@@ -399,6 +401,7 @@ onMounted(async () => {
               <div v-if="d.replies.length" class="discuss__replies">
                 <div v-for="r in d.replies" :key="r.id" class="discuss__reply">
                   <div class="discuss__reply-head">
+                    <Avatar :src="r.authorAvatar" :name="r.author || ''" :size="24" />
                     <span class="discuss__author">{{ r.author }}</span>
                     <span class="discuss__time">{{ r.createTime.slice(0, 10) }}</span>
                     <el-button v-if="canDelete(r)" class="discuss__del" size="small" text type="danger" @click="onDelete(r)">删除</el-button>
@@ -633,18 +636,6 @@ onMounted(async () => {
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-  }
-
-  &__seller-avatar {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--mark);
-    color: #fff;
-    font-family: var(--font-serif);
-    font-size: 1.1rem;
   }
 
   &__seller-name {

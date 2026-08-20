@@ -3,6 +3,7 @@ export interface UserBrief {
   id: number
   username: string
   nickname: string
+  avatar?: string
   credit: number
 }
 
@@ -19,6 +20,7 @@ export interface FriendRequestItem {
   fromUserId: number
   fromUsername: string
   fromNickname: string
+  fromAvatar?: string
   fromCredit: number
   toUserId: number
   /** 0 待处理 / 1 同意 / 2 拒绝 */

@@ -35,4 +35,11 @@ public interface MessageMapper {
     /** 按好友未读数（好友行角标） */
     @Select("SELECT sender_id AS userId, COUNT(*) AS unreadCount FROM message WHERE receiver_id = #{me} AND is_read = 0 GROUP BY sender_id")
     List<PeerUnreadVO> selectUnreadSummary(@Param("me") Long me);
+
+    /** 消息中心分页列表：我收到的全部消息（跨好友，含发送者昵称/头像，SQL 在 XML） */
+    List<MessageVO> selectInboxPage(@Param("me") Long me);
+
+    /** 标记单条已读：仅接收者本人可标（防越权），已读幂等 */
+    @Update("UPDATE message SET is_read = 1 WHERE id = #{id} AND receiver_id = #{me} AND is_read = 0")
+    int markSingleRead(@Param("id") Long id, @Param("me") Long me);
 }

@@ -17,6 +17,8 @@ public class UserProfile {
     private String bio;
     /** 兴趣标签，逗号分隔 */
     private String interestTags;
+    /** 书籍喜好分类ID，逗号分隔 */
+    private String genreIds;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     /** 逻辑删除：0 正常 / 1 删除 */

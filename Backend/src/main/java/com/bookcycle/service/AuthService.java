@@ -11,7 +11,6 @@ import com.bookcycle.mapper.RoleMapper;
 import com.bookcycle.mapper.UserMapper;
 import com.bookcycle.mapper.UserProfileMapper;
 import com.bookcycle.security.JwtUtil;
-import com.bookcycle.vo.UserVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,6 +35,7 @@ public class AuthService {
     private final UserMapper userMapper;
     private final RoleMapper roleMapper;
     private final UserProfileMapper userProfileMapper;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -50,7 +50,7 @@ public class AuthService {
         userMapper.updateLastLoginTime(user.getId(), LocalDateTime.now());
         Role role = roleMapper.selectById(user.getRoleId());
         String token = jwtUtil.generateToken(user.getId(), user.getUsername(), role.getRoleCode());
-        return LoginResultVO.builder().token(token).user(toUserVO(user, role)).build();
+        return LoginResultVO.builder().token(token).user(userService.toUserVO(user, role)).build();
     }
 
     /** 注册：校验 → 插 sys_user + user_profile，账号唯一（手机号或邮箱） */
@@ -100,20 +100,6 @@ public class AuthService {
             user = userMapper.selectByEmail(account);
         }
         return user;
-    }
-
-    private UserVO toUserVO(SysUser user, Role role) {
-        UserProfile profile = userProfileMapper.selectByUserId(user.getId());
-        return UserVO.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .nickname(profile != null ? profile.getNickname() : null)
-                .avatar(profile != null ? profile.getAvatar() : null)
-                .phone(user.getPhone())
-                .email(user.getEmail())
-                .credit(user.getCredit())
-                .role(role.getRoleCode())
-                .build();
     }
 
     private boolean isPhone(String s) {

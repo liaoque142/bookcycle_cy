@@ -39,6 +39,8 @@ public class BookVO {
     private Long sellerId;
     /** 卖家昵称（user_profile.nickname） */
     private String seller;
+    /** 卖家头像（可空，前端回退首字） */
+    private String sellerAvatar;
     /** 卖家信誉分 */
     private Integer credit;
     private LocalDateTime createdAt;

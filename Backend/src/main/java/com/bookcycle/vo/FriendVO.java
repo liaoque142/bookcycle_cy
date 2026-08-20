@@ -15,6 +15,8 @@ public class FriendVO {
     private Long userId;
     private String username;
     private String nickname;
+    /** 好友头像（可空，前端回退首字） */
+    private String avatar;
     private Integer credit;
     /** 成为好友时间 */
     private LocalDateTime createTime;

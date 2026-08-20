@@ -16,6 +16,8 @@ public class DiscussionVO {
     private Long userId;
     /** 评论人昵称（缺省回退用户名） */
     private String author;
+    /** 评论人头像（可空，前端回退首字） */
+    private String authorAvatar;
     private String content;
     /** 图片 URL（可选，与文字可并存） */
     private String imageUrl;

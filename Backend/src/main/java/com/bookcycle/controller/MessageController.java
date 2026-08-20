@@ -1,5 +1,6 @@
 package com.bookcycle.controller;
 
+import com.bookcycle.common.PageResult;
 import com.bookcycle.common.Result;
 import com.bookcycle.dto.social.SendMessageRequest;
 import com.bookcycle.security.SecurityUtils;
@@ -7,6 +8,8 @@ import com.bookcycle.service.MessageService;
 import com.bookcycle.vo.MessageVO;
 import com.bookcycle.vo.PeerUnreadVO;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -36,6 +40,14 @@ public class MessageController {
         return Result.ok();
     }
 
+    /** 消息中心：我收到的全部私信（跨好友，含发送者昵称/头像，分页倒序） */
+    @GetMapping
+    public Result<PageResult<MessageVO>> inbox(
+            @RequestParam(defaultValue = "1") @Min(value = 1, message = "页码从 1 开始") int page,
+            @RequestParam(defaultValue = "20") @Min(value = 1, message = "每页至少 1 条") @Max(value = 100, message = "每页最多 100 条") int size) {
+        return Result.ok(messageService.inboxPage(SecurityUtils.currentUserId(), page, size));
+    }
+
     /** 与某好友的聊天记录（第三者访问返回空列表） */
     @GetMapping("/{userId}")
     public Result<List<MessageVO>> history(@PathVariable Long userId) {
@@ -46,6 +58,13 @@ public class MessageController {
     @PutMapping("/{userId}/read")
     public Result<Void> read(@PathVariable Long userId) {
         messageService.markPeerRead(userId, SecurityUtils.currentUserId());
+        return Result.ok();
+    }
+
+    /** 标记单条已读（仅接收者本人，越权由 SQL 拦截；路径 1 段避免与 /{userId}/read 模板冲突） */
+    @PutMapping("/{id}")
+    public Result<Void> readSingle(@PathVariable Long id) {
+        messageService.markSingleRead(id, SecurityUtils.currentUserId());
         return Result.ok();
     }
 

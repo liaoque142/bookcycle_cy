@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { login as loginApi, register as registerApi, logout as logoutApi } from '@/api/auth'
+import { fetchMe } from '@/api/user'
 import type { LoginParams, RegisterParams, User } from '@/types/user'
 
 const TOKEN_KEY = 'bc_token'
@@ -47,5 +48,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { token, user, isLoggedIn, login, register, logout }
+  /** 同步最新用户资料（改头像/昵称/简介后调用，写 store + localStorage） */
+  function setUser(u: User) {
+    user.value = u
+    localStorage.setItem(USER_KEY, JSON.stringify(u))
+  }
+
+  /** 从后端拉取我的最新资料（登录后刷新，保证新字段 bio/genreIds 等同步） */
+  async function refreshUser() {
+    if (!token.value) return
+    const u = await fetchMe()
+    setUser(u)
+  }
+
+  return { token, user, isLoggedIn, login, register, logout, setUser, refreshUser }
 })

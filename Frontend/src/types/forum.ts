@@ -13,6 +13,8 @@ export interface ForumPostItem {
   boardName: string
   authorId: number
   author: string
+  /** 发帖人头像（可空，前端回退首字） */
+  authorAvatar?: string
   title: string
   /** 列表摘要 */
   excerpt: string
@@ -36,6 +38,8 @@ export interface ForumComment {
   postId: number
   authorId: number
   author: string
+  /** 评论人头像（可空，前端回退首字） */
+  authorAvatar?: string
   content: string
   /** 图片 URL（可选，与文字可并存） */
   imageUrl?: string

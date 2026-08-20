@@ -1,6 +1,7 @@
 package com.bookcycle.service;
 
 import com.bookcycle.common.ContentValidator;
+import com.bookcycle.common.PageResult;
 import com.bookcycle.dto.social.SendMessageRequest;
 import com.bookcycle.entity.Message;
 import com.bookcycle.exception.BusinessException;
@@ -9,6 +10,8 @@ import com.bookcycle.mapper.MessageMapper;
 import com.bookcycle.mapper.UserMapper;
 import com.bookcycle.vo.MessageVO;
 import com.bookcycle.vo.PeerUnreadVO;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,5 +76,16 @@ public class MessageService {
     /** 按好友未读数（好友行角标） */
     public List<PeerUnreadVO> unreadSummary(Long me) {
         return messageMapper.selectUnreadSummary(me);
+    }
+
+    /** 消息中心：我收到的全部私信（跨好友，含发送者昵称/头像，分页倒序） */
+    public PageResult<MessageVO> inboxPage(Long me, int page, int size) {
+        PageHelper.startPage(page, size);
+        return PageResult.of(new PageInfo<>(messageMapper.selectInboxPage(me)));
+    }
+
+    /** 标记单条已读：幂等，越权由 SQL 的 receiver_id=me 拦截 */
+    public void markSingleRead(Long id, Long me) {
+        messageMapper.markSingleRead(id, me);
     }
 }

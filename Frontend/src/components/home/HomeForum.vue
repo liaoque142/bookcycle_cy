@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ChatLineRound } from '@element-plus/icons-vue'
+import Avatar from '@/components/common/Avatar.vue'
 import type { ForumPostItem } from '@/types/forum'
 
 defineProps<{ posts: ForumPostItem[] }>()
@@ -19,7 +20,10 @@ defineProps<{ posts: ForumPostItem[] }>()
           <li v-for="p in posts" :key="p.id" class="posts__row">
             <span class="posts__board">{{ p.boardName }}</span>
             <router-link :to="`/forum/posts/${p.id}`" class="posts__title">{{ p.title }}</router-link>
-            <span class="posts__by">{{ p.author }}</span>
+            <span class="posts__by">
+              <Avatar :src="p.authorAvatar" :name="p.author || ''" :size="18" />
+              {{ p.author }}
+            </span>
             <span class="posts__stat">
               <el-icon><ChatLineRound /></el-icon>{{ p.replyCount }}
             </span>
@@ -100,6 +104,9 @@ defineProps<{ posts: ForumPostItem[] }>()
   }
 
   &__by {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 0.82rem;
     color: var(--muted);
     white-space: nowrap;

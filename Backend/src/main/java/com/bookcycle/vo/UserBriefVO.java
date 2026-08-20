@@ -11,5 +11,7 @@ public class UserBriefVO {
     private Long id;
     private String username;
     private String nickname;
+    /** 头像（可空，前端回退首字） */
+    private String avatar;
     private Integer credit;
 }

@@ -20,6 +20,8 @@ public class ForumPostVO {
     private Long authorId;
     /** 发帖人昵称（user_profile.nickname，缺省回退用户名） */
     private String author;
+    /** 发帖人头像（可空，前端回退首字） */
+    private String authorAvatar;
     private String title;
     /** 列表摘要（SQL LEFT 截取，详情为 NULL） */
     private String excerpt;

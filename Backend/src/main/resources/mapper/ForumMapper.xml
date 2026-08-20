@@ -9,6 +9,7 @@
         <result property="boardName" column="boardName"/>
         <result property="authorId" column="authorId"/>
         <result property="author" column="author"/>
+        <result property="authorAvatar" column="authorAvatar"/>
         <result property="title" column="title"/>
         <result property="excerpt" column="excerpt"/>
         <result property="content" column="content"/>
@@ -20,10 +21,10 @@
         <result property="updateTime" column="update_time" javaType="java.time.LocalDateTime"/>
     </resultMap>
 
-    <!-- 帖子基础列：联表取板块名与发帖人昵称 -->
+    <!-- 帖子基础列：联表取板块名与发帖人昵称/头像 -->
     <sql id="postColumns">
         SELECT p.id, p.board_id AS boardId, b.name AS boardName,
-               p.user_id AS authorId, COALESCE(up.nickname, su.username) AS author,
+               p.user_id AS authorId, COALESCE(up.nickname, su.username) AS author, up.avatar AS authorAvatar,
                p.title, p.like_count AS likeCount, p.view_count AS viewCount,
                p.create_time, p.update_time
         FROM forum_post p
@@ -34,7 +35,7 @@
 
     <select id="selectPostPage" resultMap="ForumPostVOMap">
         SELECT p.id, p.board_id AS boardId, b.name AS boardName,
-               p.user_id AS authorId, COALESCE(up.nickname, su.username) AS author,
+               p.user_id AS authorId, COALESCE(up.nickname, su.username) AS author, up.avatar AS authorAvatar,
                p.title, LEFT(p.content, 100) AS excerpt,
                (SELECT COUNT(*) FROM forum_comment fc WHERE fc.post_id = p.id AND fc.deleted = 0) AS replyCount,
                p.like_count AS likeCount, p.view_count AS viewCount,
@@ -59,7 +60,7 @@
 
     <select id="selectPostById" resultMap="ForumPostVOMap">
         SELECT p.id, p.board_id AS boardId, b.name AS boardName,
-               p.user_id AS authorId, COALESCE(up.nickname, su.username) AS author,
+               p.user_id AS authorId, COALESCE(up.nickname, su.username) AS author, up.avatar AS authorAvatar,
                p.title, p.content,
                (SELECT COUNT(*) FROM forum_comment fc WHERE fc.post_id = p.id AND fc.deleted = 0) AS replyCount,
                p.like_count AS likeCount, p.view_count AS viewCount,
@@ -74,7 +75,7 @@
 
     <select id="selectComments" resultType="com.bookcycle.vo.ForumCommentVO">
         SELECT c.id, c.post_id AS postId, c.user_id AS authorId,
-               COALESCE(up.nickname, su.username) AS author, c.content, c.image_url AS imageUrl,
+               COALESCE(up.nickname, su.username) AS author, up.avatar AS authorAvatar, c.content, c.image_url AS imageUrl,
                c.create_time AS createTime
         FROM forum_comment c
         JOIN sys_user su ON c.user_id = su.id AND su.deleted = 0

@@ -8,6 +8,10 @@ export interface MessageItem {
   imageUrl?: string
   /** 1 已读 / 0 未读 */
   isRead: number
+  /** 发送人昵称（缺省回退用户名） */
+  senderName?: string
+  /** 发送人头像（可空，前端回退首字） */
+  senderAvatar?: string
   createTime: string
 }
 

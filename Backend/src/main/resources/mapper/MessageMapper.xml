@@ -2,10 +2,11 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.bookcycle.mapper.MessageMapper">
 
-    <!-- 两人最近 limit 条消息正序：内层倒序取最新 N 条，外层转正序便于聊天展示 -->
+    <!-- 两人最近 limit 条消息正序：内层倒序取最新 N 条，外层联表发送者昵称/头像后转正序便于聊天展示 -->
     <select id="selectHistory" resultType="com.bookcycle.vo.MessageVO">
-        SELECT id, sender_id AS senderId, receiver_id AS receiverId, content, image_url AS imageUrl,
-               is_read AS isRead, create_time AS createTime
+        SELECT m.id, m.sender_id AS senderId, m.receiver_id AS receiverId, m.content, m.image_url AS imageUrl,
+               m.is_read AS isRead, m.create_time AS createTime,
+               COALESCE(up.nickname, su.username) AS senderName, up.avatar AS senderAvatar
         FROM (
             SELECT id, sender_id, receiver_id, content, image_url, is_read, create_time
             FROM message
@@ -13,7 +14,21 @@
                OR (sender_id = #{peer} AND receiver_id = #{me})
             ORDER BY id DESC
             LIMIT #{limit}
-        ) t
-        ORDER BY t.id ASC
+        ) m
+        JOIN sys_user su ON m.sender_id = su.id AND su.deleted = 0
+        LEFT JOIN user_profile up ON su.id = up.user_id AND up.deleted = 0
+        ORDER BY m.id ASC
+    </select>
+
+    <!-- 消息中心：我收到的全部消息（跨好友），联表发送者昵称/头像，按 id 倒序分页（PageHelper 包裹安全） -->
+    <select id="selectInboxPage" resultType="com.bookcycle.vo.MessageVO">
+        SELECT m.id, m.sender_id AS senderId, m.receiver_id AS receiverId, m.content, m.image_url AS imageUrl,
+               m.is_read AS isRead, m.create_time AS createTime,
+               COALESCE(up.nickname, su.username) AS senderName, up.avatar AS senderAvatar
+        FROM message m
+        JOIN sys_user su ON m.sender_id = su.id AND su.deleted = 0
+        LEFT JOIN user_profile up ON su.id = up.user_id AND up.deleted = 0
+        WHERE m.receiver_id = #{me}
+        ORDER BY m.id DESC
     </select>
 </mapper>

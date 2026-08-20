@@ -7,6 +7,7 @@
         <id property="id" column="id"/>
         <result property="username" column="username"/>
         <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
         <result property="credit" column="credit"/>
     </resultMap>
 
@@ -15,6 +16,7 @@
         <result property="userId" column="userId"/>
         <result property="username" column="username"/>
         <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
         <result property="credit" column="credit"/>
         <result property="createTime" column="createTime" javaType="java.time.LocalDateTime"/>
     </resultMap>
@@ -24,6 +26,7 @@
         <result property="fromUserId" column="fromUserId"/>
         <result property="fromUsername" column="fromUsername"/>
         <result property="fromNickname" column="fromNickname"/>
+        <result property="fromAvatar" column="fromAvatar"/>
         <result property="fromCredit" column="fromCredit"/>
         <result property="toUserId" column="toUserId"/>
         <result property="status" column="status"/>
@@ -35,13 +38,14 @@
         <result property="userId" column="userId"/>
         <result property="username" column="username"/>
         <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
         <result property="credit" column="credit"/>
         <result property="createTime" column="createTime" javaType="java.time.LocalDateTime"/>
     </resultMap>
 
     <!-- 用户摘要基础列 + 联表（昵称缺省回退用户名） -->
     <sql id="userBriefColumns">
-        u.id, u.username, COALESCE(p.nickname, u.username) AS nickname, u.credit
+        u.id, u.username, COALESCE(p.nickname, u.username) AS nickname, p.avatar AS avatar, u.credit
     </sql>
 
     <sql id="userBriefJoins">
@@ -67,7 +71,7 @@
 
     <select id="selectFriends" resultMap="FriendVOMap">
         SELECT f.id, f.friend_id AS userId, u.username,
-               COALESCE(p.nickname, u.username) AS nickname, u.credit,
+               COALESCE(p.nickname, u.username) AS nickname, p.avatar AS avatar, u.credit,
                f.create_time AS createTime
         FROM friend f
         JOIN sys_user u ON u.id = f.friend_id AND u.deleted = 0
@@ -90,7 +94,7 @@
     <select id="selectRequests" resultMap="FriendRequestVOMap">
         SELECT r.id, r.from_user_id AS fromUserId, r.to_user_id AS toUserId, r.status,
                r.create_time AS createTime, u.username AS fromUsername,
-               COALESCE(p.nickname, u.username) AS fromNickname, u.credit AS fromCredit
+               COALESCE(p.nickname, u.username) AS fromNickname, p.avatar AS fromAvatar, u.credit AS fromCredit
         FROM friend_request r
         JOIN sys_user u ON u.id = r.from_user_id AND u.deleted = 0
         LEFT JOIN user_profile p ON p.user_id = u.id AND p.deleted = 0
@@ -119,7 +123,7 @@
 
     <select id="selectBlacklist" resultMap="BlacklistVOMap">
         SELECT b.id, b.black_user_id AS userId, u.username,
-               COALESCE(p.nickname, u.username) AS nickname, u.credit,
+               COALESCE(p.nickname, u.username) AS nickname, p.avatar AS avatar, u.credit,
                b.create_time AS createTime
         FROM blacklist b
         JOIN sys_user u ON u.id = b.black_user_id AND u.deleted = 0

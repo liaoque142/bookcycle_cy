@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, ChatDotRound } from '@element-plus/icons-vue'
 import {
@@ -15,6 +16,7 @@ import {
 } from '@/api/social'
 import { sendMessage, fetchHistory, markPeerRead, fetchMessageUnreadSummary } from '@/api/message'
 import ImageUploader from '@/components/common/ImageUploader.vue'
+import Avatar from '@/components/common/Avatar.vue'
 import type { UserBrief, Friend, FriendRequestItem, BlacklistItem } from '@/types/social'
 import type { MessageItem } from '@/types/message'
 import { useMessageStore } from '@/stores/message'
@@ -22,6 +24,8 @@ import { useAuthStore } from '@/stores/auth'
 
 type TabKey = 'friends' | 'requests' | 'blacklist'
 
+const route = useRoute()
+const router = useRouter()
 const tab = ref<TabKey>('friends')
 const friends = ref<Friend[]>([])
 const requests = ref<FriendRequestItem[]>([])
@@ -63,6 +67,14 @@ async function load() {
     loading.value = false
   }
   refreshUnread()
+  // 消息中心「去聊天」跳转：定位到指定好友并自动打开抽屉
+  const chatTo = Number(route.query.chatTo)
+  if (chatTo) {
+    router.replace({ path: '/friends' })
+    const f = friends.value.find((x) => x.userId === chatTo)
+    if (f) openChat(f)
+    else ElMessage.warning('该用户已不是好友，无法打开聊天')
+  }
 }
 
 function isFriend(id: number) {
@@ -287,7 +299,7 @@ onUnmounted(stopPoll)
         <!-- 搜索结果 -->
         <div v-if="results.length" class="search">
           <div v-for="u in results" :key="u.id" class="search__item">
-            <span class="search__avatar">{{ (u.nickname || u.username).slice(0, 1) }}</span>
+            <Avatar :src="u.avatar" :name="u.nickname || u.username || ''" :size="40" />
             <div class="search__info">
               <p class="search__name">{{ u.nickname || u.username }}</p>
               <p class="search__meta">信誉 {{ u.credit }}</p>
@@ -326,7 +338,7 @@ onUnmounted(stopPoll)
         <div v-loading="loading" v-show="tab === 'friends'" class="panel">
           <div v-if="friends.length" class="rows">
             <div v-for="f in friends" :key="f.id" class="row">
-              <span class="row__avatar">{{ (f.nickname || f.username).slice(0, 1) }}</span>
+              <Avatar :src="f.avatar" :name="f.nickname || f.username || ''" :size="40" />
               <div class="row__info">
                 <p class="row__name">
                   {{ f.nickname || f.username }}
@@ -350,7 +362,7 @@ onUnmounted(stopPoll)
         <div v-loading="loading" v-show="tab === 'requests'" class="panel">
           <div v-if="requests.length" class="rows">
             <div v-for="r in requests" :key="r.id" class="row">
-              <span class="row__avatar">{{ (r.fromNickname || r.fromUsername).slice(0, 1) }}</span>
+              <Avatar :src="r.fromAvatar" :name="r.fromNickname || r.fromUsername || ''" :size="40" />
               <div class="row__info">
                 <p class="row__name">{{ r.fromNickname || r.fromUsername }}</p>
                 <p class="row__meta">@{{ r.fromUsername }} · 信誉 {{ r.fromCredit }} · {{ r.createTime.slice(0, 10) }}</p>
@@ -371,7 +383,7 @@ onUnmounted(stopPoll)
         <div v-loading="loading" v-show="tab === 'blacklist'" class="panel">
           <div v-if="blacklist.length" class="rows">
             <div v-for="b in blacklist" :key="b.id" class="row">
-              <span class="row__avatar row__avatar--muted">{{ (b.nickname || b.username).slice(0, 1) }}</span>
+              <Avatar :src="b.avatar" :name="b.nickname || b.username || ''" :size="40" muted />
               <div class="row__info">
                 <p class="row__name">{{ b.nickname || b.username }}</p>
                 <p class="row__meta">@{{ b.username }} · {{ b.createTime.slice(0, 10) }}</p>
@@ -482,17 +494,6 @@ onUnmounted(stopPoll)
     }
   }
 
-  &__avatar {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--mark);
-    color: #fff;
-    font-family: var(--font-serif);
-  }
-
   &__info {
     flex: 1;
     min-width: 0;
@@ -597,22 +598,6 @@ onUnmounted(stopPoll)
 
   &:last-child {
     border-bottom: none;
-  }
-
-  &__avatar {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background: var(--mark);
-    color: #fff;
-    font-family: var(--font-serif);
-
-    &--muted {
-      background: #999;
-    }
   }
 
   &__info {

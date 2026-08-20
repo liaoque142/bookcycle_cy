@@ -15,6 +15,8 @@ public class ForumCommentVO {
     private Long authorId;
     /** 评论人昵称（user_profile.nickname，缺省回退用户名） */
     private String author;
+    /** 评论人头像（可空，前端回退首字） */
+    private String authorAvatar;
     private String content;
     /** 图片 URL（可选，与文字可并存） */
     private String imageUrl;
