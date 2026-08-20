@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Star, StarFilled } from '@element-plus/icons-vue'
 import BookCover from '@/components/common/BookCover.vue'
+import ImageUploader from '@/components/common/ImageUploader.vue'
 import { fetchBookById, fetchMyBooks } from '@/api/book'
 import { fetchAddresses } from '@/api/address'
 import { createOrder, payOrder } from '@/api/order'
@@ -174,8 +175,10 @@ function onFavorite() {
 const discussions = ref<DiscussionItem[]>([])
 const discLoading = ref(false)
 const draft = ref('')
+const draftImage = ref('')
 const replyTo = ref<number | null>(null)
 const replyDraft = ref('')
+const replyImage = ref('')
 const submitting = ref(false)
 
 function currentUserId() {
@@ -208,14 +211,16 @@ function requireLogin(): boolean {
 async function submitTop() {
   if (!book.value || !requireLogin()) return
   const content = draft.value.trim()
-  if (!content) {
+  const imageUrl = draftImage.value
+  if (!content && !imageUrl) {
     ElMessage.warning('请输入评论内容')
     return
   }
   submitting.value = true
   try {
-    await createDiscussion(book.value.id, { content })
+    await createDiscussion(book.value.id, { content, imageUrl })
     draft.value = ''
+    draftImage.value = ''
     ElMessage.success('评论已发布')
     loadDiscussions()
   } catch (e) {
@@ -229,20 +234,23 @@ function openReply(d: DiscussionItem) {
   if (!requireLogin()) return
   replyTo.value = replyTo.value === d.id ? null : d.id
   replyDraft.value = ''
+  replyImage.value = ''
 }
 
 async function submitReply(d: DiscussionItem) {
   if (!book.value) return
   const content = replyDraft.value.trim()
-  if (!content) {
+  const imageUrl = replyImage.value
+  if (!content && !imageUrl) {
     ElMessage.warning('请输入回复内容')
     return
   }
   submitting.value = true
   try {
-    await createDiscussion(book.value.id, { content, parentId: d.id })
+    await createDiscussion(book.value.id, { content, imageUrl, parentId: d.id })
     replyTo.value = null
     replyDraft.value = ''
+    replyImage.value = ''
     ElMessage.success('回复成功')
     loadDiscussions()
   } catch (e) {
@@ -361,6 +369,7 @@ onMounted(async () => {
         <div class="discuss__editor">
           <el-input v-model="draft" type="textarea" :rows="3" maxlength="500" show-word-limit placeholder="写点什么，让书友更了解这本书…" />
           <div class="discuss__editor-foot">
+            <ImageUploader v-model="draftImage" />
             <el-button type="primary" round :loading="submitting" @click="submitTop">发表评论</el-button>
           </div>
         </div>
@@ -373,12 +382,18 @@ onMounted(async () => {
                 <span class="discuss__time">{{ d.createTime.slice(0, 10) }}</span>
                 <el-button v-if="canDelete(d)" class="discuss__del" size="small" text type="danger" @click="onDelete(d)">删除</el-button>
               </div>
-              <p class="discuss__content">{{ d.content }}</p>
+              <div class="discuss__body">
+                <img v-if="d.imageUrl" :src="d.imageUrl" class="discuss__img" alt="图片" />
+                <p v-if="d.content" class="discuss__content">{{ d.content }}</p>
+              </div>
               <button class="discuss__reply-btn" @click="openReply(d)">{{ replyTo === d.id ? '收起回复' : '回复' }}</button>
 
               <div v-if="replyTo === d.id" class="discuss__reply-editor">
                 <el-input v-model="replyDraft" type="textarea" :rows="2" maxlength="500" :placeholder="`回复 @${d.author}`" />
-                <el-button type="primary" size="small" round :loading="submitting" @click="submitReply(d)">回复</el-button>
+                <div class="discuss__reply-foot">
+                  <ImageUploader v-model="replyImage" />
+                  <el-button type="primary" size="small" round :loading="submitting" @click="submitReply(d)">回复</el-button>
+                </div>
               </div>
 
               <div v-if="d.replies.length" class="discuss__replies">
@@ -388,7 +403,10 @@ onMounted(async () => {
                     <span class="discuss__time">{{ r.createTime.slice(0, 10) }}</span>
                     <el-button v-if="canDelete(r)" class="discuss__del" size="small" text type="danger" @click="onDelete(r)">删除</el-button>
                   </div>
-                  <p class="discuss__content discuss__content--reply">{{ r.content }}</p>
+                  <div class="discuss__body">
+                    <img v-if="r.imageUrl" :src="r.imageUrl" class="discuss__img" alt="图片" />
+                    <p v-if="r.content" class="discuss__content discuss__content--reply">{{ r.content }}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -801,7 +819,9 @@ onMounted(async () => {
 
     &-foot {
       display: flex;
-      justify-content: flex-end;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sp-2);
       margin-top: var(--sp-3);
     }
   }
@@ -839,13 +859,24 @@ onMounted(async () => {
     margin-left: auto;
   }
 
-  &__content {
+  &__body {
     margin-top: var(--sp-2);
+  }
+
+  &__img {
+    max-width: 260px;
+    max-height: 320px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    object-fit: contain;
+    margin-bottom: var(--sp-2);
+  }
+
+  &__content {
     line-height: 1.7;
     font-size: 0.95rem;
 
     &--reply {
-      margin-top: 0;
       font-size: 0.9rem;
     }
   }
@@ -869,6 +900,13 @@ onMounted(async () => {
     padding: var(--sp-3);
     background: var(--paper);
     border-radius: var(--radius);
+  }
+
+  &__reply-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
   }
 
   &__replies {

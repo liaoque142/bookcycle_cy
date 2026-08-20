@@ -14,6 +14,7 @@ import {
   removeBlacklist,
 } from '@/api/social'
 import { sendMessage, fetchHistory, markPeerRead, fetchMessageUnreadSummary } from '@/api/message'
+import ImageUploader from '@/components/common/ImageUploader.vue'
 import type { UserBrief, Friend, FriendRequestItem, BlacklistItem } from '@/types/social'
 import type { MessageItem } from '@/types/message'
 import { useMessageStore } from '@/stores/message'
@@ -45,6 +46,7 @@ const drawerOpen = ref(false)
 const activeFriend = ref<Friend | null>(null)
 const messages = ref<MessageItem[]>([])
 const draft = ref('')
+const draftImage = ref('')
 const sending = ref(false)
 const msgLoading = ref(false)
 const msgListEl = ref<HTMLElement>()
@@ -141,7 +143,7 @@ async function onBlacklist(u: UserBrief) {
 async function onUnblack(b: BlacklistItem) {
   try {
     await removeBlacklist(b.userId)
-    ElMessage.success('已解除拉黑')
+    ElMessage.success('已解除拉黑，好友关系已恢复')
     load()
   } catch (e) {
     ElMessage.error((e as Error).message || '操作失败')
@@ -219,25 +221,29 @@ function onDrawerClose() {
   activeFriend.value = null
   messages.value = []
   draft.value = ''
+  draftImage.value = ''
   refreshUnread()
 }
 
 async function onChatSend() {
   const peer = activeFriend.value
   const content = draft.value.trim()
-  if (!peer || !content) return
+  const imageUrl = draftImage.value
+  if (!peer || (!content && !imageUrl)) return
   sending.value = true
   try {
-    await sendMessage(peer.userId, content)
+    await sendMessage({ toUserId: peer.userId, content, imageUrl })
     messages.value.push({
       id: Date.now(),
       senderId: meId.value!,
       receiverId: peer.userId,
       content,
+      imageUrl,
       isRead: 1,
       createTime: new Date().toISOString(),
     })
     draft.value = ''
+    draftImage.value = ''
     scrollToBottom()
   } catch (e) {
     ElMessage.error((e as Error).message || '发送失败')
@@ -393,7 +399,10 @@ onUnmounted(stopPoll)
               class="chat__row"
               :class="{ 'chat__row--me': m.senderId === meId }"
             >
-              <div class="chat__bubble" :class="{ 'chat__bubble--me': m.senderId === meId }">{{ m.content }}</div>
+              <div class="chat__bubble" :class="{ 'chat__bubble--me': m.senderId === meId }">
+                <img v-if="m.imageUrl" :src="m.imageUrl" class="chat__img" alt="图片" />
+                <p v-if="m.content" class="chat__text">{{ m.content }}</p>
+              </div>
               <span class="chat__time">{{ formatTime(m.createTime) }}</span>
             </div>
           </div>
@@ -410,7 +419,10 @@ onUnmounted(stopPoll)
             resize="none"
             @keydown.enter.exact.prevent="onChatSend"
           />
-          <el-button type="primary" :loading="sending" @click="onChatSend">发送</el-button>
+          <div class="chat__input-foot">
+            <ImageUploader v-model="draftImage" />
+            <el-button type="primary" :loading="sending" @click="onChatSend">发送</el-button>
+          </div>
         </div>
       </el-drawer>
     </div>
@@ -684,7 +696,26 @@ onUnmounted(stopPoll)
       background: var(--ink);
       border-color: var(--ink);
       color: #fff;
+
+      .chat__img {
+        border: 1px solid rgba(255, 255, 255, 0.15);
+      }
     }
+  }
+
+  &__img {
+    max-width: 180px;
+    max-height: 240px;
+    display: block;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    object-fit: contain;
+  }
+
+  &__text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
   &__time {
@@ -701,13 +732,18 @@ onUnmounted(stopPoll)
 }
 
 .chat__input {
-  display: flex;
-  gap: var(--sp-2);
-  align-items: flex-end;
   margin-top: var(--sp-3);
 
-  .el-button {
-    flex-shrink: 0;
+  &-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    margin-top: var(--sp-2);
+
+    .el-button {
+      flex-shrink: 0;
+    }
   }
 }
 

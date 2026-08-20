@@ -16,6 +16,8 @@ public class ForumComment {
     /** 评论用户ID */
     private Long userId;
     private String content;
+    /** 图片 URL（可选，与文字可并存） */
+    private String imageUrl;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     /** 逻辑删除：0 正常 / 1 删除 */

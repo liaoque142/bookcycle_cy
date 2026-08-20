@@ -4,9 +4,20 @@ export interface MessageItem {
   senderId: number
   receiverId: number
   content: string
+  /** 图片 URL（可选，与文字可并存） */
+  imageUrl?: string
   /** 1 已读 / 0 未读 */
   isRead: number
   createTime: string
+}
+
+/** 发送私信参数 */
+export interface SendMessagePayload {
+  toUserId: number
+  /** 文字内容（与图片至少一项） */
+  content: string
+  /** 图片 URL（可选） */
+  imageUrl?: string
 }
 
 /** 按好友未读数（好友行角标） */

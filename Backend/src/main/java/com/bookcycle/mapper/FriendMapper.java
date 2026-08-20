@@ -59,9 +59,13 @@ public interface FriendMapper {
     /** 任一方向存在拉黑即返回 >0 */
     int countBlackBetween(@Param("a") Long a, @Param("b") Long b);
 
-    /** 拉黑（INSERT IGNORE 幂等） */
-    @Insert("INSERT IGNORE INTO blacklist (user_id, black_user_id) VALUES (#{userId}, #{blackUserId})")
-    int insertBlacklist(@Param("userId") Long userId, @Param("blackUserId") Long blackUserId);
+    /** 拉黑（INSERT IGNORE 幂等），wasFriend=拉黑时是否为好友（解除时据此恢复好友） */
+    @Insert("INSERT IGNORE INTO blacklist (user_id, black_user_id, was_friend) VALUES (#{userId}, #{blackUserId}, #{wasFriend})")
+    int insertBlacklist(@Param("userId") Long userId, @Param("blackUserId") Long blackUserId, @Param("wasFriend") boolean wasFriend);
+
+    /** 拉黑记录是否为好友（1 是 / 0 否），用于解除拉黑时恢复好友 */
+    @Select("SELECT was_friend FROM blacklist WHERE user_id = #{userId} AND black_user_id = #{blackUserId}")
+    Integer selectBlackWasFriend(@Param("userId") Long userId, @Param("blackUserId") Long blackUserId);
 
     /** 解除拉黑 */
     @Delete("DELETE FROM blacklist WHERE user_id = #{userId} AND black_user_id = #{blackUserId}")

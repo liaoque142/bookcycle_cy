@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, ChatLineRound, Star, StarFilled, View, EditPen, Delete } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
+import ImageUploader from '@/components/common/ImageUploader.vue'
 import {
   fetchForumBoards,
   fetchForumPostDetail,
@@ -26,6 +27,7 @@ const loading = ref(false)
 const liking = ref(false)
 
 const commentText = ref('')
+const commentImage = ref('')
 const submitting = ref(false)
 
 const boards = ref<ForumBoard[]>([])
@@ -70,11 +72,13 @@ async function submitComment() {
     return
   }
   const content = commentText.value.trim()
-  if (!content) return
+  const imageUrl = commentImage.value
+  if (!content && !imageUrl) return
   submitting.value = true
   try {
-    await createForumComment({ postId: post.value.id, content })
+    await createForumComment({ postId: post.value.id, content, imageUrl })
     commentText.value = ''
+    commentImage.value = ''
     ElMessage.success('评论成功')
     comments.value = await fetchForumComments(post.value.id)
     post.value.replyCount += 1
@@ -180,6 +184,7 @@ onMounted(async () => {
               placeholder="友善评论，理性发言…"
             />
             <div class="comments__submit">
+              <ImageUploader v-model="commentImage" />
               <el-button type="primary" round :loading="submitting" @click="submitComment">发表评论</el-button>
             </div>
           </div>
@@ -189,7 +194,10 @@ onMounted(async () => {
                 <span class="comment__author">{{ c.author }}</span>
                 <span class="comment__time">{{ formatTime(c.createTime) }}</span>
               </div>
-              <p class="comment__content">{{ c.content }}</p>
+              <div class="comment__body">
+                <img v-if="c.imageUrl" :src="c.imageUrl" class="comment__img" alt="图片" />
+                <p v-if="c.content" class="comment__content">{{ c.content }}</p>
+              </div>
             </li>
             <li v-if="comments.length === 0" class="comment__empty">还没有评论，来抢沙发</li>
           </ul>
@@ -343,7 +351,9 @@ onMounted(async () => {
 
   &__submit {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
     margin-top: var(--sp-3);
   }
 
@@ -374,8 +384,20 @@ onMounted(async () => {
     color: var(--muted);
   }
 
-  &__content {
+  &__body {
     margin-top: var(--sp-2);
+  }
+
+  &__img {
+    max-width: 260px;
+    max-height: 320px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    object-fit: contain;
+    margin-bottom: var(--sp-2);
+  }
+
+  &__content {
     font-size: 0.95rem;
     line-height: 1.7;
     white-space: pre-wrap;

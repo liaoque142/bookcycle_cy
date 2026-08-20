@@ -21,7 +21,7 @@ public interface DiscussionMapper {
     /** 全部子回复（parent_id 非空，时间正序，Service 端按 parentId 组装） */
     List<DiscussionVO> selectReplies(@Param("bookId") Long bookId);
 
-    @Insert("INSERT INTO book_discussion (book_id, user_id, content, parent_id) VALUES (#{bookId}, #{userId}, #{content}, #{parentId})")
+    @Insert("INSERT INTO book_discussion (book_id, user_id, content, image_url, parent_id) VALUES (#{bookId}, #{userId}, #{content}, #{imageUrl}, #{parentId})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(BookDiscussion discussion);
 

@@ -17,7 +17,7 @@ import java.util.List;
  */
 public interface MessageMapper {
 
-    @Insert("INSERT INTO message (sender_id, receiver_id, content, is_read) VALUES (#{senderId}, #{receiverId}, #{content}, 0)")
+    @Insert("INSERT INTO message (sender_id, receiver_id, content, image_url, is_read) VALUES (#{senderId}, #{receiverId}, #{content}, #{imageUrl}, 0)")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Message message);
 

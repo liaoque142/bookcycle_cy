@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/books/mine").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories/**", "/api/v1/books/**", "/api/v1/forum/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("admin")
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(eh -> eh

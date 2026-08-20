@@ -35,11 +35,16 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
-    await logoutApi()
-    token.value = ''
-    user.value = null
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
+    try {
+      // 无状态 JWT：调服务端登出接口（目前为空实现），失败不影响本地登出
+      await logoutApi()
+    } finally {
+      // 无论接口是否成功，本地登录态必须清干净
+      token.value = ''
+      user.value = null
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
+    }
   }
 
   return { token, user, isLoggedIn, login, register, logout }

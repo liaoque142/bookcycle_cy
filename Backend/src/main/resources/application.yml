@@ -7,6 +7,11 @@ spring:
   autoconfigure:
     # 纯 JWT 认证，不启用 Security 默认内存用户（避免生成随机密码 + in-memory user）
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+  servlet:
+    multipart:
+      # 单文件上限与请求总上限（评论/私信发图）
+      max-file-size: 5MB
+      max-request-size: 10MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/bookcycle?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
@@ -37,6 +42,10 @@ jwt:
   secret: ${JWT_SECRET:bookcycle-dev-secret-key-please-change-in-prod-0123456789}
   # token 有效期 7 天（毫秒）
   expiration: 604800000
+
+app:
+  # 图片上传目录（相对后端工作目录；WebConfig 静态映射 /uploads/**）
+  upload-dir: ./uploads
 
 logging:
   level:

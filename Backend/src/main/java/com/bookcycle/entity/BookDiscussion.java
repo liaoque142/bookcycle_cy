@@ -14,6 +14,8 @@ public class BookDiscussion {
     private Long bookId;
     private Long userId;
     private String content;
+    /** 图片 URL（可选，与文字可并存） */
+    private String imageUrl;
     private Long parentId;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;

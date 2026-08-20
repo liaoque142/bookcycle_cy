@@ -11,10 +11,10 @@ export async function fetchDiscussions(bookId: number): Promise<DiscussionItem[]
   return (await request.get(`/books/${bookId}/discussions`)) as unknown as DiscussionItem[]
 }
 
-/** 发表讨论 / 回复（parentId 为空为顶级） */
+/** 发表讨论 / 回复（parentId 为空为顶级；content 与 imageUrl 至少一项） */
 export async function createDiscussion(
   bookId: number,
-  payload: { content: string; parentId?: number | null },
+  payload: { content: string; imageUrl?: string; parentId?: number | null },
 ): Promise<void> {
   if (USE_MOCK) {
     await delay(120)

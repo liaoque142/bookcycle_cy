@@ -16,5 +16,7 @@ public class ForumCommentVO {
     /** 评论人昵称（user_profile.nickname，缺省回退用户名） */
     private String author;
     private String content;
+    /** 图片 URL（可选，与文字可并存） */
+    private String imageUrl;
     private LocalDateTime createTime;
 }

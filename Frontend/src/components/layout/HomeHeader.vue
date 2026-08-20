@@ -52,7 +52,8 @@ async function onLogout() {
   unreadCount.value = 0
   messageStore.unread = 0
   ElMessage.success('已退出登录')
-  if (route.path === '/profile' || route.path === '/publish') router.push('/')
+  // 退出后统一回主页（登录态已清空，留在受限页会触发路由守卫跳转）
+  router.push('/')
 }
 
 function onCommand(cmd: string) {

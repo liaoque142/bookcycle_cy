@@ -1,5 +1,6 @@
 package com.bookcycle.service;
 
+import com.bookcycle.common.ContentValidator;
 import com.bookcycle.common.PageResult;
 import com.bookcycle.dto.forum.CreateCommentRequest;
 import com.bookcycle.dto.forum.CreatePostRequest;
@@ -90,10 +91,12 @@ public class ForumService {
     @Transactional
     public void createComment(CreateCommentRequest req, Long userId) {
         requirePost(req.getPostId());
+        ContentValidator.requireContent(req.getContent(), req.getImageUrl());
         ForumComment comment = new ForumComment();
         comment.setPostId(req.getPostId());
         comment.setUserId(userId);
-        comment.setContent(req.getContent().trim());
+        comment.setContent(req.getContent() == null ? null : req.getContent().trim());
+        comment.setImageUrl(req.getImageUrl());
         forumMapper.insertComment(comment);
     }
 

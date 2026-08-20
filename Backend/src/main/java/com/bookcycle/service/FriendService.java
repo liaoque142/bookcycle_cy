@@ -121,7 +121,7 @@ public class FriendService {
         return friendMapper.selectBlacklist(userId);
     }
 
-    /** 拉黑（幂等），并自动解除双方好友关系 */
+    /** 拉黑（幂等），并自动解除双方好友关系；记录拉黑前是否为好友以便解除时恢复 */
     @Transactional
     public void addBlacklist(Long blackUserId, Long userId) {
         if (blackUserId.equals(userId)) {
@@ -130,13 +130,21 @@ public class FriendService {
         if (userMapper.selectById(blackUserId) == null) {
             throw new BusinessException("用户不存在");
         }
-        friendMapper.insertBlacklist(userId, blackUserId);
-        friendMapper.deleteFriendPair(userId, blackUserId);
+        boolean wasFriend = friendMapper.countFriend(userId, blackUserId) > 0;
+        friendMapper.insertBlacklist(userId, blackUserId, wasFriend);
+        if (wasFriend) {
+            friendMapper.deleteFriendPair(userId, blackUserId);
+        }
     }
 
-    /** 解除拉黑 */
+    /** 解除拉黑：拉黑前是好友且双方已无拉黑关系时，恢复双向好友 */
     @Transactional
     public void removeBlacklist(Long blackUserId, Long userId) {
+        Integer wasFriend = friendMapper.selectBlackWasFriend(userId, blackUserId);
         friendMapper.deleteBlacklist(userId, blackUserId);
+        if (wasFriend != null && wasFriend == 1 && friendMapper.countBlackBetween(userId, blackUserId) == 0) {
+            friendMapper.upsertFriend(userId, blackUserId);
+            friendMapper.upsertFriend(blackUserId, userId);
+        }
     }
 }

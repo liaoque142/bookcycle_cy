@@ -1,5 +1,6 @@
 package com.bookcycle.service;
 
+import com.bookcycle.common.ContentValidator;
 import com.bookcycle.dto.social.SendMessageRequest;
 import com.bookcycle.entity.Message;
 import com.bookcycle.exception.BusinessException;
@@ -28,7 +29,7 @@ public class MessageService {
     private final UserMapper userMapper;
     private final FriendMapper friendMapper;
 
-    /** 发送私信：不能发给自己 / 用户须存在 / 仅好友可发 */
+    /** 发送私信：不能发给自己 / 用户须存在 / 仅好友可发，内容或图片至少一项 */
     @Transactional
     public void send(SendMessageRequest req, Long fromUserId) {
         Long toUserId = req.getToUserId();
@@ -41,11 +42,17 @@ public class MessageService {
         if (friendMapper.countFriend(fromUserId, toUserId) == 0) {
             throw new BusinessException("只能给好友发送私信");
         }
+        ContentValidator.requireContent(req.getContent(), req.getImageUrl());
         Message m = new Message();
         m.setSenderId(fromUserId);
         m.setReceiverId(toUserId);
-        m.setContent(req.getContent().trim());
+        m.setContent(trimToNull(req.getContent()));
+        m.setImageUrl(req.getImageUrl());
         messageMapper.insert(m);
+    }
+
+    private static String trimToNull(String s) {
+        return s == null ? null : s.trim();
     }
 
     /** 与某好友的聊天记录（最近 100 条正序）；查询以本人为边界，第三者访问为空 */

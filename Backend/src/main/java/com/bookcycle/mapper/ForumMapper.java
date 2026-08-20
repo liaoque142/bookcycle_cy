@@ -52,7 +52,7 @@ public interface ForumMapper {
     /** 帖子评论列表（按时间升序） */
     List<ForumCommentVO> selectComments(@Param("postId") Long postId);
 
-    @Insert("INSERT INTO forum_comment (post_id, user_id, content) VALUES (#{postId}, #{userId}, #{content})")
+    @Insert("INSERT INTO forum_comment (post_id, user_id, content, image_url) VALUES (#{postId}, #{userId}, #{content}, #{imageUrl})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertComment(ForumComment comment);
 

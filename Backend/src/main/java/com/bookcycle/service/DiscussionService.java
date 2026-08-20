@@ -1,5 +1,6 @@
 package com.bookcycle.service;
 
+import com.bookcycle.common.ContentValidator;
 import com.bookcycle.dto.social.CreateDiscussionRequest;
 import com.bookcycle.entity.Book;
 import com.bookcycle.entity.BookDiscussion;
@@ -48,10 +49,12 @@ public class DiscussionService {
                 throw new BusinessException("回复的评论不存在");
             }
         }
+        ContentValidator.requireContent(req.getContent(), req.getImageUrl());
         BookDiscussion d = new BookDiscussion();
         d.setBookId(bookId);
         d.setUserId(userId);
-        d.setContent(req.getContent().trim());
+        d.setContent(req.getContent() == null ? null : req.getContent().trim());
+        d.setImageUrl(req.getImageUrl());
         d.setParentId(req.getParentId());
         discussionMapper.insert(d);
     }

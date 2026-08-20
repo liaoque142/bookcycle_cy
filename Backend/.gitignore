@@ -5,3 +5,5 @@ target/
 .idea/
 *.iml
 .vscode/
+# 本地图片上传目录（评论/私信发图）
+uploads/

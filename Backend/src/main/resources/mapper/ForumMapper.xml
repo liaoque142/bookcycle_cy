@@ -74,7 +74,7 @@
 
     <select id="selectComments" resultType="com.bookcycle.vo.ForumCommentVO">
         SELECT c.id, c.post_id AS postId, c.user_id AS authorId,
-               COALESCE(up.nickname, su.username) AS author, c.content,
+               COALESCE(up.nickname, su.username) AS author, c.content, c.image_url AS imageUrl,
                c.create_time AS createTime
         FROM forum_comment c
         JOIN sys_user su ON c.user_id = su.id AND su.deleted = 0

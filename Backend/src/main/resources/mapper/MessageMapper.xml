@@ -4,10 +4,10 @@
 
     <!-- 两人最近 limit 条消息正序：内层倒序取最新 N 条，外层转正序便于聊天展示 -->
     <select id="selectHistory" resultType="com.bookcycle.vo.MessageVO">
-        SELECT id, sender_id AS senderId, receiver_id AS receiverId, content,
+        SELECT id, sender_id AS senderId, receiver_id AS receiverId, content, image_url AS imageUrl,
                is_read AS isRead, create_time AS createTime
         FROM (
-            SELECT id, sender_id, receiver_id, content, is_read, create_time
+            SELECT id, sender_id, receiver_id, content, image_url, is_read, create_time
             FROM message
             WHERE (sender_id = #{me} AND receiver_id = #{peer})
                OR (sender_id = #{peer} AND receiver_id = #{me})

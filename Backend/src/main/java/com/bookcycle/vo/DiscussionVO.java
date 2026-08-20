@@ -17,6 +17,8 @@ public class DiscussionVO {
     /** 评论人昵称（缺省回退用户名） */
     private String author;
     private String content;
+    /** 图片 URL（可选，与文字可并存） */
+    private String imageUrl;
     /** 父评论 ID，NULL 为顶级 */
     private Long parentId;
     private LocalDateTime createTime;

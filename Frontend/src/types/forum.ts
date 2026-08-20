@@ -37,6 +37,8 @@ export interface ForumComment {
   authorId: number
   author: string
   content: string
+  /** 图片 URL（可选，与文字可并存） */
+  imageUrl?: string
   createTime: string
 }
 
@@ -50,7 +52,10 @@ export interface CreateForumPostPayload {
 /** 评论提交参数 */
 export interface CreateForumCommentPayload {
   postId: number
+  /** 文字内容（与图片至少一项） */
   content: string
+  /** 图片 URL（可选） */
+  imageUrl?: string
 }
 
 /** 点赞结果 */

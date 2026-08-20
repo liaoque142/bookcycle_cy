@@ -1,9 +1,10 @@
 # 项目进度
 
 ## 当前阶段
-阶段六：swap（书友互换）全部完成，下一步阶段七 测试与部署（Redis/Docker/Nginx 需先安装）
+阶段六：swap（书友互换）全部完成 + 一轮优化完善（退出登录回主页、解除拉黑恢复好友、关于页、评论/私信发图）。用户暂不进入阶段七，下一步按需继续打磨或阶段七 测试与部署（Redis/Docker/Nginx 需先安装）
 
 ## 已完成
+- [x] 优化完善（2026-08-20，4 项）：① 退出登录 try/finally 清 token + HomeHeader 无条件回主页；② `blacklist.was_friend` 记录拉黑前是否好友，解除拉黑（且对方未反向拉黑）时 upsertFriend 双向恢复，非好友不误加；③ 重写 About.vue（理念/功能/信誉/安全/指南/免责声明，纸墨风）；④ 评论/私信发图——本地上传接口 `POST /api/v1/upload/image` + `/uploads/**` 静态映射 + message/forum_comment/book_discussion 加 image_url + ContentValidator（图/文至少一项 + /uploads/ 前缀校验）+ ImageUploader 组件接入 4 处编辑器。冒烟全通过、冒烟数据已清理（详见 CHANGELOG）。
 - [x] 需求整合修订（plan.md：7 阶段划分、补 6 张表、信誉规则改数据驱动、错误码规范）
 - [x] CLAUDE.md 环境基线（JDK 21 / MySQL 8.4.5 / Node 24.9 / npm 11.6）+ 进度管理配置
 - [x] 前端脚手架初始化（Vite 8 + Vue 3 + TS + Element Plus + Pinia + Router）
@@ -36,6 +37,7 @@
 - [x] 阶段四：社交（好友管理、拉黑、书籍讨论区、消息通知）——已完成后端 + 前端
 
 ## 决策记录
+- 2026-08-20：优化完善设计——① 退出登录：无状态 JWT 服务端 logout 空实现，本地登出用 try/finally 保证接口异常也清 token，退出统一回主页（不限页面）；② 解除拉黑恢复好友：**不在黑名单表塞会话状态**，加 `was_friend` 一列记拉黑时是否为好友，解除时 `countBlackBetween==0`（对方未反向拉黑）才 `upsertFriend` 双向恢复，天然覆盖「非好友误加/互相拉黑」边界；③ 图片上传**不引 MinIO/OSS**（本机无），用本地磁盘 `uploads/` + `WebMvcConfigurer` 静态映射 `/uploads/**`（Security 放行供 <img> 免登录加载），`app.upload-dir` 可配，扩展名白名单 + 大小 5MB + content-type 校验，UUID 文件名防碰撞；④ 评论/私信图片**不加 content_type 列**，直接 `image_url` 可空列与文字并存（纯图/图文/纯文），服务端 `ContentValidator` 校验「图/文至少一项 + imageUrl 必须 /uploads/ 前缀」防注入任意 URL；前端 mock 模式上传用 FileReader 读 data URL（无后端也可预览）。**⚠️ 数据库加列 MySQL 8 不支持 ADD COLUMN IF NOT EXISTS**，旧库用 `sql/upgrade_2026-08-20.sql` 一次性 ALTER（勿重复执行），schema.sql 同步保证新装一致。
 - 2026-08-17：持久层用 MyBatis XML Mapper + PageHelper，不用 MyBatis-Plus（⚠️ plan.md 技术选型仍写 MyBatis-Plus，待同步修订）
 - 2026-08-17：RBAC 统一账号（用户/管理员同走 sys_user + role，无独立 admin 表）
 - 2026-08-17：优先逻辑删除；接口前缀 /api/v1
