@@ -45,6 +45,10 @@ public interface UserMapper {
     @Update("UPDATE sys_user SET status = #{status} WHERE id = #{id} AND deleted = 0")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
 
+    /** 修改用户角色 */
+    @Update("UPDATE sys_user SET role_id = #{roleId} WHERE id = #{id} AND deleted = 0")
+    int updateRole(@Param("id") Long id, @Param("roleId") Long roleId);
+
     /** 查询用户角色编码（用于禁止禁用管理员账号） */
     @Select("SELECT r.role_code FROM role r JOIN sys_user su ON su.role_id = r.id WHERE su.id = #{userId} AND su.deleted = 0")
     String selectRoleCodeByUserId(@Param("userId") Long userId);

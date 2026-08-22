@@ -2,10 +2,13 @@ package com.bookcycle.service;
 
 import com.bookcycle.common.PageResult;
 import com.bookcycle.dto.admin.AdjustCreditRequest;
+import com.bookcycle.dto.admin.UserRoleRequest;
 import com.bookcycle.entity.CreditLog;
+import com.bookcycle.entity.Role;
 import com.bookcycle.entity.SysUser;
 import com.bookcycle.exception.BusinessException;
 import com.bookcycle.mapper.CreditMapper;
+import com.bookcycle.mapper.RoleMapper;
 import com.bookcycle.mapper.UserMapper;
 import com.bookcycle.security.SecurityUtils;
 import com.bookcycle.vo.AdminUserVO;
@@ -26,6 +29,7 @@ public class AdminUserService {
 
     private final UserMapper userMapper;
     private final CreditMapper creditMapper;
+    private final RoleMapper roleMapper;
     private final OperationLogService operationLogService;
 
     public PageResult<AdminUserVO> page(String keyword, Integer status, int page, int size) {
@@ -74,6 +78,29 @@ public class AdminUserService {
         operationLogService.record("ADJUST_CREDIT", "调整用户 " + user.getUsername()
                 + " 信誉分 " + (req.getChangeValue() > 0 ? "+" : "") + req.getChangeValue()
                 + "，原因：" + req.getReason());
+    }
+
+    /** 设置用户角色（仅 admin / user；不能改自己的角色，避免管理后台锁死；已同角色幂等） */
+    @Transactional
+    public void updateRole(Long id, UserRoleRequest req) {
+        Long operatorId = SecurityUtils.currentUserId();
+        if (operatorId.equals(id)) {
+            throw new BusinessException(400, "不能修改自己的角色");
+        }
+        String roleCode = req.getRoleCode() == null ? null : req.getRoleCode().trim();
+        if (!"admin".equals(roleCode) && !"user".equals(roleCode)) {
+            throw new BusinessException(400, "角色不合法");
+        }
+        Role role = roleMapper.selectByCode(roleCode);
+        if (role == null) {
+            throw new BusinessException(400, "角色不存在");
+        }
+        SysUser user = requireUser(id);
+        if (roleCode.equals(userMapper.selectRoleCodeByUserId(id))) {
+            return; // 已是该角色，幂等不重复记录
+        }
+        userMapper.updateRole(id, role.getId());
+        operationLogService.record("SET_ROLE", "用户 " + user.getUsername() + " 角色设为 " + role.getRoleName());
     }
 
     private SysUser requireUser(Long id) {

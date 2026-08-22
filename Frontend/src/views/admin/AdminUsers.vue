@@ -2,9 +2,12 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
-import { fetchAdminUsers, fetchAdminUserDetail, updateAdminUserStatus, adjustAdminUserCredit } from '@/api/admin'
+import { fetchAdminUsers, fetchAdminUserDetail, updateAdminUserStatus, adjustAdminUserCredit, updateAdminUserRole } from '@/api/admin'
+import { useAuthStore } from '@/stores/auth'
 import type { AdminUser } from '@/types/admin'
 import type { Page } from '@/types/api'
+
+const authStore = useAuthStore()
 
 const query = reactive<{ keyword: string; status?: number }>({ keyword: '', status: undefined })
 const list = ref<AdminUser[]>([])
@@ -60,6 +63,34 @@ function onPageChange(p: number) {
 /** admin 账号禁止禁用（后端也会拦，前端先禁点） */
 function isAdminRow(row: AdminUser) {
   return row.roleCode === 'admin'
+}
+
+/** 当前登录管理员（自己的行不允许取消管理员，防锁死） */
+function isSelf(row: AdminUser) {
+  return authStore.user?.id === row.id
+}
+
+async function toggleRole(row: AdminUser) {
+  const toAdmin = row.roleCode !== 'admin'
+  const action = toAdmin ? '设为管理员' : '取消管理员'
+  const tip = toAdmin
+    ? '设置后该用户将获得管理后台访问权限（重新登录后生效）。'
+    : '取消后该用户将失去管理后台访问权限（重新登录后生效）。'
+  try {
+    await ElMessageBox.confirm(`确定${action}「${row.nickname}」？${tip}`, action, {
+      type: 'warning',
+      confirmButtonText: action,
+    })
+  } catch {
+    return
+  }
+  try {
+    await updateAdminUserRole(row.id, toAdmin ? 'admin' : 'user')
+    ElMessage.success(`已${action}`)
+    await load()
+  } catch (e) {
+    ElMessage.error((e as Error).message || `${action}失败`)
+  }
 }
 
 async function openDetail(row: AdminUser) {
@@ -163,10 +194,12 @@ onMounted(load)
         </template>
       </el-table-column>
       <el-table-column prop="createTime" label="注册时间" width="165" />
-      <el-table-column label="操作" width="190" fixed="right">
+      <el-table-column label="操作" width="300" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="openDetail(row)">详情</el-button>
           <el-button link type="primary" @click="openCredit(row)">调整信誉</el-button>
+          <el-button v-if="row.roleCode !== 'admin'" link type="warning" @click="toggleRole(row)">设为管理员</el-button>
+          <el-button v-else-if="!isSelf(row)" link type="danger" @click="toggleRole(row)">取消管理员</el-button>
           <el-tooltip :disabled="!isAdminRow(row)" content="管理员账号不可禁用" placement="top">
             <span>
               <el-button

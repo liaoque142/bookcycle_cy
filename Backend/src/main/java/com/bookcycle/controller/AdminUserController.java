@@ -3,6 +3,7 @@ package com.bookcycle.controller;
 import com.bookcycle.common.PageResult;
 import com.bookcycle.common.Result;
 import com.bookcycle.dto.admin.AdjustCreditRequest;
+import com.bookcycle.dto.admin.UserRoleRequest;
 import com.bookcycle.dto.admin.UserStatusRequest;
 import com.bookcycle.service.AdminUserService;
 import com.bookcycle.vo.AdminUserVO;
@@ -48,6 +49,13 @@ public class AdminUserController {
     @PutMapping("/{id}/status")
     public Result<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody UserStatusRequest req) {
         adminUserService.updateStatus(id, req.getStatus());
+        return Result.ok();
+    }
+
+    /** 设置角色（普通账户设为管理员 / 取消管理员） */
+    @PutMapping("/{id}/role")
+    public Result<Void> updateRole(@PathVariable Long id, @Valid @RequestBody UserRoleRequest req) {
+        adminUserService.updateRole(id, req);
         return Result.ok();
     }
 

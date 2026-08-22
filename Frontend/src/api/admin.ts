@@ -45,6 +45,15 @@ export async function adjustAdminUserCredit(id: number, changeValue: number, rea
   await request.put(`/admin/users/${id}/credit`, { changeValue, reason })
 }
 
+/** 设置用户角色（roleCode: 'admin' | 'user'，改角色需该用户重新登录生效） */
+export async function updateAdminUserRole(id: number, roleCode: string): Promise<void> {
+  if (USE_MOCK) {
+    await delay(120)
+    return
+  }
+  await request.put(`/admin/users/${id}/role`, { roleCode })
+}
+
 /** 管理后台：分类管理（返回扁平列表，前端组树） */
 export async function fetchAdminCategories(): Promise<AdminCategory[]> {
   if (USE_MOCK) {
