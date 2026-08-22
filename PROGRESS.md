@@ -1,7 +1,7 @@
 # 项目进度
 
 ## 当前阶段
-阶段六：swap（书友互换）全部完成 + 五轮优化完善（第一轮：退出登录回主页、解除拉黑恢复好友、关于页、评论/私信发图；第二轮：消息中心+单条已读、头像自定义全站显示、个人信息界面；第三轮：修复头像不更新 bug、好友信息卡片弹窗；第四轮：修复私信图片花屏、上传限额 内容图10M/头像5M/仅jpg·png；第五轮：支付收款码（pay_qr 上传/卖家收款码支付弹窗，预留支付宝微信）+ 喜欢书籍全功能（收藏/我的收藏页/好友弹窗收藏展示））。用户暂不进入阶段七，下一步按需继续打磨或阶段七 测试与部署（Redis/Docker/Nginx 需先安装）
+阶段六：swap（书友互换）全部完成 + 五轮优化完善（第一轮：退出登录回主页、解除拉黑恢复好友、关于页、评论/私信发图；第二轮：消息中心+单条已读、头像自定义全站显示、个人信息界面；第三轮：修复头像不更新 bug、好友信息卡片弹窗；第四轮：修复私信图片花屏、上传限额 内容图10M/头像5M/仅jpg·png；第五轮：支付收款码（pay_qr 上传/卖家收款码支付弹窗，预留支付宝微信）+ 喜欢书籍全功能（收藏/我的收藏页/好友弹窗收藏展示））+ 第五轮后修复（好友弹窗崩溃 createTime·userId 补映射、订单支付弹窗不弹 改普通 ref，均前端）。用户暂不进入阶段七，下一步按需继续打磨或阶段七 测试与部署（Redis/Docker/Nginx 需先安装）
 
 ## 已完成
 - [x] 第五轮优化完善（2026-08-22，2 项）：① **支付收付款码（预留支付宝/微信）**——`user_profile.pay_qr` 收款码列（schema + `sql/upgrade_2026-08-22.sql` 已应用本机库），全链路加字段 + `UploadService` payQr scene（5MB）+ `TradeMapper` 联卖家 user_profile 取 sellerPayQr → OrderVO；前端 Profile 编辑弹窗/信息卡上传预览收款码，BookDetail/Orders 支付弹窗改「扫码支付」展示卖家收款码 + 主按钮「我已转账支付」（模拟支付不变）；② **喜欢书籍全功能（收藏）**——favorite 表（schema 早已建）补后端 Favorite 实体/Mapper（INSERT IGNORE 幂等）/Service/Controller（`POST|DELETE /favorites/{bookId}`、`GET /favorites/me`）+ BookVO.favorited（新 selectDetailVO 复用 bookVoColumns + currentUserIdOrNull 游客 false，不动 selectById）+ `GET /friends/{userId}/favorites`（好友门控）；前端 api/favorite.ts、BookDetail 收藏按钮接通（非乐观）、Favorites.vue 我的收藏页 + 路由 + Profile 菜单、Friends 好友弹窗加「喜欢书籍」封面网格。冒烟全通过（payQr 上传/回读、下单带 sellerPayQr、支付待发货、收藏切换、我的收藏、好友收藏、非好友 400）+ mvn test(1) + vue-tsc/vite build，冒烟数据已清理（详见 CHANGELOG）。

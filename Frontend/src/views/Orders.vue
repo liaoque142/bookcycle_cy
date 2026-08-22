@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { fetchOrders, payOrder, cancelOrder, shipOrder, confirmOrder, evaluateOrder } from '@/api/order'
 import { fetchCreditMe } from '@/api/credit'
@@ -19,26 +19,14 @@ const loading = ref(true)
 // 支付弹窗
 const payOrderRef = ref<Order | null>(null)
 const paying = ref(false)
+const payVisible = ref(false)
 
 // 评价弹窗
 const evalOrderRef = ref<Order | null>(null)
 const evalScore = ref(5)
 const evalContent = ref('')
 const evaluating = ref(false)
-
-/** 弹窗显隐（v-model 需成员表达式，用 computed 包装） */
-const payVisible = computed({
-  get: () => !!payOrderRef.value,
-  set: (v: boolean) => {
-    if (!v) payOrderRef.value = null
-  },
-})
-const evalVisible = computed({
-  get: () => !!evalOrderRef.value,
-  set: (v: boolean) => {
-    if (!v) evalOrderRef.value = null
-  },
-})
+const evalVisible = ref(false)
 
 const statusOptions = [
   { label: '全部', value: undefined },
@@ -84,7 +72,7 @@ function actionsOf(o: Order): { key: string; label: string; danger?: boolean }[]
   const asBuyer = role.value === 'buyer'
   const list: { key: string; label: string; danger?: boolean }[] = []
   if (o.statusCode === 1) {
-    list.push({ key: 'pay', label: '去支付' })
+    if (asBuyer) list.push({ key: 'pay', label: '去支付' })
     list.push({ key: 'cancel', label: '取消订单', danger: true })
   } else if (o.statusCode === 2) {
     if (asBuyer) list.push({ key: 'cancel', label: '取消订单', danger: true })
@@ -100,6 +88,7 @@ function actionsOf(o: Order): { key: string; label: string; danger?: boolean }[]
 async function run(o: Order, key: string) {
   if (key === 'pay') {
     payOrderRef.value = o
+    payVisible.value = true
   } else if (key === 'cancel') {
     try {
       const { value } = await ElMessageBox.prompt('取消后书籍将重新上架；已支付订单自动退款', '取消订单', {
@@ -127,6 +116,7 @@ async function run(o: Order, key: string) {
     evalOrderRef.value = o
     evalScore.value = 5
     evalContent.value = ''
+    evalVisible.value = true
   }
 }
 
@@ -136,8 +126,11 @@ async function doPay() {
   try {
     await payOrder(payOrderRef.value.orderNo)
     ElMessage.success('支付成功')
+    payVisible.value = false
     payOrderRef.value = null
     await load()
+  } catch (e) {
+    ElMessage.error((e as Error).message || '支付失败')
   } finally {
     paying.value = false
   }
@@ -152,9 +145,12 @@ async function doEvaluate() {
       content: evalContent.value.trim() || undefined,
     })
     ElMessage.success('评价成功')
+    evalVisible.value = false
     evalOrderRef.value = null
     await load()
     await refreshCredit()
+  } catch (e) {
+    ElMessage.error((e as Error).message || '评价失败')
   } finally {
     evaluating.value = false
   }
@@ -247,7 +243,7 @@ onMounted(async () => {
   </section>
 
   <!-- 支付弹窗：展示卖家收款码，买家扫码转账（一期模拟支付，预留支付宝/微信） -->
-  <el-dialog v-model="payVisible" title="扫码支付" width="420px" :close-on-click-modal="false">
+  <el-dialog v-model="payVisible" title="扫码支付" width="420px" :close-on-click-modal="false" @closed="payOrderRef = null">
     <div v-if="payOrderRef" class="pay">
       <p class="pay__book">{{ payOrderRef.bookTitle }}</p>
       <p class="pay__amount">需支付 ¥{{ payOrderRef.amount }}</p>
@@ -265,13 +261,13 @@ onMounted(async () => {
       <p v-else class="pay__tip">卖家未设置收款码，请先与卖家沟通付款方式</p>
     </div>
     <template #footer>
-      <el-button @click="payOrderRef = null">暂不支付</el-button>
+      <el-button @click="payVisible = false; payOrderRef = null">暂不支付</el-button>
       <el-button type="primary" :loading="paying" @click="doPay">我已转账支付</el-button>
     </template>
   </el-dialog>
 
   <!-- 评价弹窗 -->
-  <el-dialog v-model="evalVisible" title="交易评价" width="460px" :close-on-click-modal="false">
+  <el-dialog v-model="evalVisible" title="交易评价" width="460px" :close-on-click-modal="false" @closed="evalOrderRef = null">
     <div v-if="evalOrderRef" class="eval">
       <p class="eval__book">{{ evalOrderRef.bookTitle }}</p>
       <el-rate v-model="evalScore" :max="5" show-score score-template="{value} 分" />
@@ -287,7 +283,7 @@ onMounted(async () => {
       <p class="eval__tip">好评（≥4 分）将给被评方增加信誉分</p>
     </div>
     <template #footer>
-      <el-button @click="evalOrderRef = null">取消</el-button>
+      <el-button @click="evalVisible = false; evalOrderRef = null">取消</el-button>
       <el-button type="primary" :loading="evaluating" @click="doEvaluate">提交评价</el-button>
     </template>
   </el-dialog>

@@ -187,7 +187,9 @@ async function openDetail(f: Friend) {
       fetchFriendDetail(f.userId),
       fetchFriendFavorites(f.userId),
     ])
-    currentDetail.value = detail
+    // 后端详情返回 UserVO（无 createTime/userId），归一化为 FriendDetail 形状：
+    // createTime = 好友列表行的「成为好友时间」，userId = 详情 id
+    currentDetail.value = { ...detail, userId: detail.id, createTime: f.createTime }
     friendFavs.value = fav.list
     detailVisible.value = true
   } catch (e) {
