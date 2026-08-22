@@ -7,6 +7,7 @@ import type {
   CreateOrderPayload,
   CancelOrderPayload,
   EvaluationPayload,
+  CreateRefundPayload,
 } from '@/types/trade'
 
 /** mock 订单（默认模式演示用） */
@@ -157,4 +158,13 @@ export async function evaluateOrder(orderNo: string, payload: EvaluationPayload)
     return
   }
   await request.post(`/orders/${orderNo}/evaluate`, payload)
+}
+
+/** 申请售后（买家）：type 1 仅退款 / 2 退货退款，reason 可选 */
+export async function createRefund(orderNo: string, payload: CreateRefundPayload): Promise<void> {
+  if (USE_MOCK) {
+    await delay(200)
+    return
+  }
+  await request.post(`/orders/${orderNo}/refund`, payload)
 }

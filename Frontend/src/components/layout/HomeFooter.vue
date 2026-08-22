@@ -1,9 +1,33 @@
 <script setup lang="ts">
 const year = new Date().getFullYear()
 const cols = [
-  { title: '书市', links: ['浏览书籍', '发布闲置', '交易规则', '信誉体系'] },
-  { title: '社区', links: ['读书心得', '书评', '闲置交流', '帮助中心'] },
-  { title: '关于', links: ['关于书循环', '加入我们', '隐私政策', '用户协议'] },
+  {
+    title: '书市',
+    links: [
+      { label: '浏览书籍', to: '/books' },
+      { label: '发布闲置', to: '/publish' },
+      { label: '交易规则', to: '/about' },
+      { label: '信誉体系', to: '/about' },
+    ],
+  },
+  {
+    title: '社区',
+    links: [
+      { label: '读书心得', to: '/forum' },
+      { label: '书评', to: '/forum' },
+      { label: '闲置交流', to: '/forum' },
+      { label: '帮助中心', to: '/about' },
+    ],
+  },
+  {
+    title: '关于',
+    links: [
+      { label: '关于书循环', to: '/about' },
+      { label: '加入我们', to: '/about' },
+      { label: '隐私政策', to: '/about' },
+      { label: '用户协议', to: '/about' },
+    ],
+  },
 ]
 </script>
 
@@ -19,8 +43,8 @@ const cols = [
       <div v-for="col in cols" :key="col.title" class="footer__col">
         <h4>{{ col.title }}</h4>
         <ul>
-          <li v-for="link in col.links" :key="link">
-            <a href="#">{{ link }}</a>
+          <li v-for="link in col.links" :key="link.label">
+            <router-link :to="link.to">{{ link.label }}</router-link>
           </li>
         </ul>
       </div>

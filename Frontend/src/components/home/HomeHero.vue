@@ -25,8 +25,12 @@ const shelf = [
           也为它找到下一双愿意翻开的手。
         </p>
         <div class="hero__actions">
-          <el-button type="primary" size="large" round class="hero__cta">浏览书市</el-button>
-          <el-button size="large" round class="hero__cta hero__cta--ghost">发布闲置书</el-button>
+          <router-link to="/books">
+            <el-button type="primary" size="large" round class="hero__cta">浏览书市</el-button>
+          </router-link>
+          <router-link to="/publish">
+            <el-button size="large" round class="hero__cta hero__cta--ghost">发布闲置书</el-button>
+          </router-link>
         </div>
         <p class="hero__note">每笔交易双方互评 · 信誉分透明可查 · 优先逻辑删除保障安全</p>
       </div>

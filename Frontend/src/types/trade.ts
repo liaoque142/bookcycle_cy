@@ -28,6 +28,8 @@ export interface Order {
   payStatus?: number
   payTime?: string
   evaluatedByMe?: boolean
+  /** 售后状态：0 无 / 1 申请中 / 2 处理中 / 3 已完成（对应后端 OrderVO.afterSale） */
+  afterSale?: number
   createTime: string
   updateTime: string
 }
@@ -62,6 +64,12 @@ export interface PayPayload {
 export interface EvaluationPayload {
   score: number
   content?: string
+}
+
+/** 申请售后入参（type 1 仅退款 / 2 退货退款） */
+export interface CreateRefundPayload {
+  type: 1 | 2
+  reason?: string
 }
 
 export interface OrderQuery {

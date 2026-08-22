@@ -22,7 +22,7 @@ const iconMap: Record<string, unknown> = {
           <h2 class="section-title">按分类逛逛</h2>
           <p class="section-sub">从你喜欢的类型开始</p>
         </div>
-        <a href="#" class="section-more">全部分类 →</a>
+        <router-link to="/books" class="section-more">全部分类 →</router-link>
       </div>
 
       <ul class="cats">
