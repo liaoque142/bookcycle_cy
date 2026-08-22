@@ -12,6 +12,7 @@
         <result property="buyerName" column="buyerName"/>
         <result property="sellerId" column="sellerId"/>
         <result property="sellerName" column="sellerName"/>
+        <result property="sellerPayQr" column="sellerPayQr"/>
         <result property="amount" column="amount"/>
         <result property="tradeType" column="tradeType"/>
         <result property="tradeTypeCode" column="tradeTypeCode"/>
@@ -36,6 +37,7 @@
         SELECT o.id, o.order_no, o.book_id AS bookId, b.title AS bookTitle,
                o.buyer_id AS buyerId, COALESCE(bup.nickname, bu.username) AS buyerName,
                o.seller_id AS sellerId, COALESCE(sup.nickname, su.username) AS sellerName,
+               sup.pay_qr AS sellerPayQr,
                o.amount, o.trade_type AS tradeTypeCode,
                CASE o.trade_type WHEN 1 THEN '出售' WHEN 2 THEN '赠送' WHEN 3 THEN '交换' END AS tradeType,
                o.ship_type AS shipTypeCode,

@@ -1,8 +1,8 @@
 import request from './request'
 import { USE_MOCK, delay } from './mock'
 
-/** 上传图片，返回可访问的 URL 路径（如 /uploads/2026/08/xxx.png）；scene 区分限额：message 10MB / avatar 5MB */
-export async function uploadImage(file: File, scene: 'message' | 'avatar' = 'message'): Promise<string> {
+/** 上传图片，返回可访问的 URL 路径（如 /uploads/2026/08/xxx.png）；scene 区分限额：message 10MB / avatar·payQr 5MB */
+export async function uploadImage(file: File, scene: 'message' | 'avatar' | 'payQr' = 'message'): Promise<string> {
   if (USE_MOCK) {
     // mock 模式无后端，直接读成本地 data URL 供预览展示
     await delay(300)

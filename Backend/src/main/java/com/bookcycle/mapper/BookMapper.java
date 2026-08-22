@@ -22,6 +22,12 @@ public interface BookMapper {
 
     BookVO selectById(@Param("id") Long id);
 
+    /** 书籍详情（含当前用户是否已收藏 favorited；游客传 null 恒 false，SQL 在 XML） */
+    BookVO selectDetailVO(@Param("id") Long id, @Param("currentUserId") Long currentUserId);
+
+    /** 某用户收藏的书籍分页（我的收藏 / 好友收藏共用，SQL 在 XML） */
+    List<BookVO> selectFavoritesByUser(@Param("userId") Long userId);
+
     /** 书市分页列表（过滤 + 排序，SQL 在 XML） */
     List<BookVO> selectPage(@Param("keyword") String keyword,
                             @Param("categoryId") Long categoryId,

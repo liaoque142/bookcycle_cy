@@ -19,6 +19,8 @@ public class UserProfile {
     private String interestTags;
     /** 书籍喜好分类ID，逗号分隔 */
     private String genreIds;
+    /** 收款二维码 URL（买家下单后展示给买家扫码转账） */
+    private String payQr;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     /** 逻辑删除：0 正常 / 1 删除 */

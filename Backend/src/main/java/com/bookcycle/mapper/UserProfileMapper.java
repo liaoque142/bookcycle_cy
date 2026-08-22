@@ -22,9 +22,10 @@ public interface UserProfileMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(UserProfile profile);
 
-    /** 更新我的资料（头像/昵称/简介/兴趣标签/书籍喜好），按 user_id 更新 */
+    /** 更新我的资料（头像/昵称/简介/兴趣标签/书籍喜好/收款码），按 user_id 更新 */
     @Update("UPDATE user_profile SET avatar = #{avatar}, nickname = #{nickname}, bio = #{bio}, " +
-            "interest_tags = #{interestTags}, genre_ids = #{genreIds}, update_time = CURRENT_TIMESTAMP " +
+            "interest_tags = #{interestTags}, genre_ids = #{genreIds}, pay_qr = #{payQr}, " +
+            "update_time = CURRENT_TIMESTAMP " +
             "WHERE user_id = #{userId} AND deleted = 0")
     int updateByUserId(UserProfile profile);
 }

@@ -12,6 +12,8 @@ export interface User {
   interestTags?: string
   /** 书籍喜好分类ID（多选） */
   genreIds?: number[]
+  /** 收款二维码 URL（买家下单后扫码转账） */
+  payQr?: string
   /** 信誉分 0-100 */
   credit: number
   /** 角色名，如 user / admin */

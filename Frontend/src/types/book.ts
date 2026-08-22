@@ -33,6 +33,8 @@ export interface Book {
   /** 书籍状态：1 在售 / 2 已预订 / 3 已售出 / 4 已下架 */
   status?: number
   statusName?: string
+  /** 当前用户是否已收藏（仅详情接口填充） */
+  favorited?: boolean
 }
 
 /** 发布书籍提交参数 */

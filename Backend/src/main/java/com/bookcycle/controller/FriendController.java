@@ -1,16 +1,21 @@
 package com.bookcycle.controller;
 
+import com.bookcycle.common.PageResult;
 import com.bookcycle.common.Result;
 import com.bookcycle.dto.social.HandleFriendRequest;
 import com.bookcycle.dto.social.SendFriendRequest;
 import com.bookcycle.security.SecurityUtils;
 import com.bookcycle.service.FriendService;
+import com.bookcycle.vo.BookVO;
 import com.bookcycle.vo.FriendRequestVO;
 import com.bookcycle.vo.FriendVO;
 import com.bookcycle.vo.UserBriefVO;
 import com.bookcycle.vo.UserVO;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,8 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * 好友接口：搜索书友 / 好友列表 / 申请发送与处理 / 删除好友（均需登录）。
+ * 好友接口：搜索书友 / 好友列表 / 申请发送与处理 / 删除好友 / 好友收藏（均需登录）。
  */
+@Validated
 @RestController
 @RequestMapping("/api/v1/friends")
 @RequiredArgsConstructor
@@ -69,6 +75,15 @@ public class FriendController {
     @GetMapping("/{userId}")
     public Result<UserVO> detail(@PathVariable Long userId) {
         return Result.ok(friendService.friendDetail(userId, SecurityUtils.currentUserId()));
+    }
+
+    /** 好友收藏的书籍分页（仅好友可见，好友弹窗「喜欢书籍」用） */
+    @GetMapping("/{userId}/favorites")
+    public Result<PageResult<BookVO>> favorites(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "50") @Min(1) @Max(100) int size) {
+        return Result.ok(friendService.friendFavorites(userId, SecurityUtils.currentUserId(), page, size));
     }
 
     /** 删除好友（双向解除） */

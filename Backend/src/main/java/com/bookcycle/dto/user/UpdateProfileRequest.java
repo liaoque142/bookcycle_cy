@@ -25,4 +25,8 @@ public class UpdateProfileRequest {
 
     /** 书籍喜好分类ID（多选，逗号分隔存储） */
     private List<Long> genreIds;
+
+    /** 收款二维码 URL */
+    @Size(max = 255, message = "收款码地址过长")
+    private String payQr;
 }

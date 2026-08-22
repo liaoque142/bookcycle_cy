@@ -246,16 +246,27 @@ onMounted(async () => {
     </div>
   </section>
 
-  <!-- 模拟支付弹窗 -->
-  <el-dialog v-model="payVisible" title="模拟支付" width="420px" :close-on-click-modal="false">
+  <!-- 支付弹窗：展示卖家收款码，买家扫码转账（一期模拟支付，预留支付宝/微信） -->
+  <el-dialog v-model="payVisible" title="扫码支付" width="420px" :close-on-click-modal="false">
     <div v-if="payOrderRef" class="pay">
       <p class="pay__book">{{ payOrderRef.bookTitle }}</p>
       <p class="pay__amount">需支付 ¥{{ payOrderRef.amount }}</p>
-      <p class="pay__tip">一期为模拟余额支付，预留支付宝/微信</p>
+      <p class="pay__to">向卖家「{{ payOrderRef.sellerName }}」扫码转账</p>
+      <div v-if="payOrderRef.sellerPayQr" class="pay__qr">
+        <el-image
+          :src="payOrderRef.sellerPayQr"
+          :preview-src-list="[payOrderRef.sellerPayQr]"
+          preview-teleported
+          fit="contain"
+          class="pay__qr-img"
+        />
+        <p class="pay__hint">截图或扫码向卖家转账，完成后再确认</p>
+      </div>
+      <p v-else class="pay__tip">卖家未设置收款码，请先与卖家沟通付款方式</p>
     </div>
     <template #footer>
       <el-button @click="payOrderRef = null">暂不支付</el-button>
-      <el-button type="primary" :loading="paying" @click="doPay">模拟余额支付</el-button>
+      <el-button type="primary" :loading="paying" @click="doPay">我已转账支付</el-button>
     </template>
   </el-dialog>
 
@@ -444,6 +455,34 @@ onMounted(async () => {
 
   &__tip {
     margin-top: var(--sp-3);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  &__to {
+    margin-top: var(--sp-3);
+    font-size: 0.9rem;
+    color: var(--ink);
+  }
+
+  &__qr {
+    margin-top: var(--sp-3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-2);
+
+    &-img {
+      width: 180px;
+      height: 180px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: #fff;
+      cursor: zoom-in;
+    }
+  }
+
+  &__hint {
     font-size: 0.8rem;
     color: var(--muted);
   }

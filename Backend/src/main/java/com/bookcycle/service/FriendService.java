@@ -1,5 +1,6 @@
 package com.bookcycle.service;
 
+import com.bookcycle.common.PageResult;
 import com.bookcycle.dto.social.HandleFriendRequest;
 import com.bookcycle.dto.social.SendFriendRequest;
 import com.bookcycle.entity.FriendRequest;
@@ -7,6 +8,7 @@ import com.bookcycle.exception.BusinessException;
 import com.bookcycle.mapper.FriendMapper;
 import com.bookcycle.mapper.UserMapper;
 import com.bookcycle.vo.BlacklistVO;
+import com.bookcycle.vo.BookVO;
 import com.bookcycle.vo.FriendRequestVO;
 import com.bookcycle.vo.FriendVO;
 import com.bookcycle.vo.UserBriefVO;
@@ -33,6 +35,7 @@ public class FriendService {
     private final UserMapper userMapper;
     private final UserService userService;
     private final NotificationService notificationService;
+    private final FavoriteService favoriteService;
 
     /** 搜索书友（用户名/昵称模糊），空关键词返回空列表 */
     public List<UserBriefVO> search(String keyword, Long currentUserId) {
@@ -116,6 +119,14 @@ public class FriendService {
             throw new BusinessException("对方不是你的好友");
         }
         return userService.publicProfile(userId);
+    }
+
+    /** 好友收藏的书籍分页（仅好友可见，复用好友详情守卫） */
+    public PageResult<BookVO> friendFavorites(Long userId, Long currentUserId, int page, int size) {
+        if (friendMapper.countFriend(currentUserId, userId) == 0) {
+            throw new BusinessException("对方不是你的好友");
+        }
+        return favoriteService.listByUser(userId, page, size);
     }
 
     /** 删除好友：双向逻辑删除 */

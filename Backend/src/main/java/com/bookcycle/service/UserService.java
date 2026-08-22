@@ -46,6 +46,7 @@ public class UserService {
                 .bio(p != null ? p.getBio() : null)
                 .interestTags(p != null ? p.getInterestTags() : null)
                 .genreIds(parseGenreIds(p != null ? p.getGenreIds() : null))
+                .payQr(p != null ? p.getPayQr() : null)
                 .build();
     }
 
@@ -92,6 +93,9 @@ public class UserService {
         }
         if (req.getGenreIds() != null) {
             p.setGenreIds(joinGenreIds(req.getGenreIds()));
+        }
+        if (req.getPayQr() != null) {
+            p.setPayQr(trimToNull(req.getPayQr()));
         }
         try {
             userProfileMapper.updateByUserId(p);

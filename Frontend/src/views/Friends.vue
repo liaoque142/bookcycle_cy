@@ -16,12 +16,15 @@ import {
   removeBlacklist,
 } from '@/api/social'
 import { sendMessage, fetchHistory, markPeerRead, fetchMessageUnreadSummary } from '@/api/message'
+import { fetchFriendFavorites } from '@/api/favorite'
 import { USE_MOCK } from '@/api/mock'
 import { fetchCategories, type CategoryOption } from '@/api/category'
 import ImageUploader from '@/components/common/ImageUploader.vue'
 import Avatar from '@/components/common/Avatar.vue'
+import BookCover from '@/components/common/BookCover.vue'
 import type { UserBrief, Friend, FriendDetail, FriendRequestItem, BlacklistItem } from '@/types/social'
 import type { MessageItem } from '@/types/message'
+import type { Book } from '@/types/book'
 import { useMessageStore } from '@/stores/message'
 import { useAuthStore } from '@/stores/auth'
 
@@ -47,6 +50,8 @@ const blackIds = computed(() => new Set(blacklist.value.map((b) => b.userId)))
 // 好友信息卡片
 const detailVisible = ref(false)
 const currentDetail = ref<FriendDetail | null>(null)
+const friendFavs = ref<Book[]>([])
+const favLoading = ref(false)
 const categories = ref<CategoryOption[]>([])
 const detailGenres = computed(() => {
   const ids = new Set(currentDetail.value?.genreIds ?? [])
@@ -177,10 +182,18 @@ async function onUnblack(b: BlacklistItem) {
 // ---------- 好友信息卡片 ----------
 async function openDetail(f: Friend) {
   try {
-    currentDetail.value = await fetchFriendDetail(f.userId)
+    favLoading.value = true
+    const [detail, fav] = await Promise.all([
+      fetchFriendDetail(f.userId),
+      fetchFriendFavorites(f.userId),
+    ])
+    currentDetail.value = detail
+    friendFavs.value = fav.list
     detailVisible.value = true
   } catch (e) {
     ElMessage.error((e as Error).message || '获取好友信息失败')
+  } finally {
+    favLoading.value = false
   }
 }
 
@@ -495,6 +508,24 @@ onUnmounted(stopPoll)
                   <el-tag v-for="g in detailGenres" :key="g.id" size="small" effect="plain" round>{{ g.name }}</el-tag>
                 </template>
                 <template v-else>未设置</template>
+              </span>
+            </div>
+            <div class="card__row card__row--top">
+              <span class="card__label">喜欢书籍</span>
+              <span class="card__value">
+                <div v-if="friendFavs.length" v-loading="favLoading" class="card__favs">
+                  <router-link
+                    v-for="b in friendFavs"
+                    :key="b.id"
+                    :to="`/books/${b.id}`"
+                    class="card__fav"
+                    @click="detailVisible = false"
+                  >
+                    <BookCover :book="b" height="72px" />
+                    <span class="card__fav-title">{{ b.title }}</span>
+                  </router-link>
+                </div>
+                <template v-else>还没有收藏书籍</template>
               </span>
             </div>
             <div class="card__row">
@@ -857,6 +888,10 @@ onUnmounted(stopPoll)
     align-items: baseline;
     gap: var(--sp-3);
     font-size: 0.9rem;
+
+    &--top {
+      align-items: flex-start;
+    }
   }
 
   &__label {
@@ -874,6 +909,32 @@ onUnmounted(stopPoll)
     gap: 6px;
     line-height: 1.5;
     word-break: break-word;
+  }
+
+  &__favs {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--sp-2);
+  }
+
+  &__fav {
+    min-width: 0;
+    color: var(--ink);
+
+    &:hover .card__fav-title {
+      color: var(--mark);
+    }
+
+    &-title {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.72rem;
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   &__foot {

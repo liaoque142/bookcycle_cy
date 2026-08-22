@@ -62,7 +62,7 @@ public class BookController {
 
     @GetMapping("/{id}")
     public Result<BookVO> detail(@PathVariable Long id) {
-        return Result.ok(bookService.detail(id));
+        return Result.ok(bookService.detail(id, SecurityUtils.currentUserIdOrNull()));
     }
 
     /** 首页精选：高信誉卖家在售书（固定 top N，游客可看） */

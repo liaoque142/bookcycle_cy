@@ -20,6 +20,8 @@ public class OrderVO {
     private String buyerName;
     private Long sellerId;
     private String sellerName;
+    /** 卖家收款二维码 URL（下单后买家扫码转账，未设置则 null） */
+    private String sellerPayQr;
     private BigDecimal amount;
     /** 交易方式中文：出售 / 赠送 / 交换 */
     private String tradeType;

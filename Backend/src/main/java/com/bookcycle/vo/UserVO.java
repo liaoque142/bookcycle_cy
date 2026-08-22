@@ -24,6 +24,8 @@ public class UserVO {
     private String interestTags;
     /** 书籍喜好分类ID（由 user_profile.genre_ids 逗号串解析） */
     private List<Long> genreIds;
+    /** 收款二维码 URL（下单支付时展示给买家） */
+    private String payQr;
     /** 信誉分 0-100 */
     private Integer credit;
     /** 角色编码：admin / user */

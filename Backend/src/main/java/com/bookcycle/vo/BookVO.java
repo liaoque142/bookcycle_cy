@@ -43,5 +43,7 @@ public class BookVO {
     private String sellerAvatar;
     /** 卖家信誉分 */
     private Integer credit;
+    /** 当前用户是否已收藏（仅详情查询填充，列表为 null） */
+    private Boolean favorited;
     private LocalDateTime createdAt;
 }

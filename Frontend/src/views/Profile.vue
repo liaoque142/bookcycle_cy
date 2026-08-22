@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus'
 import BookCard from '@/components/home/BookCard.vue'
 import Avatar from '@/components/common/Avatar.vue'
 import AvatarUploader from '@/components/common/AvatarUploader.vue'
+import ImageUploader from '@/components/common/ImageUploader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { fetchBooks } from '@/api/book'
 import { fetchCreditMe } from '@/api/credit'
@@ -23,6 +24,7 @@ const menuItems = [
   { name: '我的换书', desc: '以书换书的交换单', to: '/swaps' },
   { name: '收货地址', desc: '管理邮寄地址', to: '/addresses' },
   { name: '我的好友', desc: '好友与黑名单管理', to: '/friends' },
+  { name: '我的收藏', desc: '喜欢的书籍', to: '/favorites' },
   { name: '消息通知', desc: '交易与好友消息', to: '/notifications' },
   { name: '信誉记录', desc: '查看信誉分变动', to: '/credit' },
 ]
@@ -45,6 +47,7 @@ function openEdit() {
     bio: user.value?.bio || '',
     avatar: user.value?.avatar || '',
     genreIds: user.value?.genreIds ? [...user.value.genreIds] : [],
+    payQr: user.value?.payQr || '',
   }
   editVisible.value = true
 }
@@ -57,6 +60,7 @@ async function onSave() {
       bio: form.value.bio,
       avatar: form.value.avatar,
       genreIds: form.value.genreIds,
+      payQr: form.value.payQr,
     })
     authStore.setUser(latest)
     editVisible.value = false
@@ -134,6 +138,14 @@ onMounted(async () => {
               <template v-else>未设置</template>
             </span>
           </div>
+          <div class="profile__info-row">
+            <span class="profile__info-label">收款码</span>
+            <span v-if="user?.payQr" class="profile__payqr">
+              <el-image :src="user.payQr" :preview-src-list="[user.payQr]" preview-teleported fit="cover" class="profile__payqr-img" />
+              <span class="profile__payqr-tip">点击放大，供买家扫码付款</span>
+            </span>
+            <span v-else>未设置</span>
+          </div>
         </div>
 
         <div class="profile__mine">
@@ -187,6 +199,12 @@ onMounted(async () => {
                 <el-select v-model="form.genreIds" multiple clearable placeholder="选择你喜欢的书籍分类" class="edit__genres">
                   <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
                 </el-select>
+              </el-form-item>
+              <el-form-item label="收款二维码">
+                <div class="edit__payqr">
+                  <ImageUploader v-model="form.payQr" scene="payQr" :max-size="5 * 1024 * 1024" />
+                  <p class="edit__payqr-tip">买家下单后可扫码付款（jpg/png，≤5MB）</p>
+                </div>
               </el-form-item>
             </el-form>
           </div>
@@ -263,6 +281,25 @@ onMounted(async () => {
   min-height: 22px;
 }
 
+.profile__payqr {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+
+  &-img {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    cursor: zoom-in;
+  }
+
+  &-tip {
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+}
+
 .edit {
   &__avatar {
     display: flex;
@@ -272,6 +309,17 @@ onMounted(async () => {
 
   &__genres {
     width: 100%;
+  }
+
+  &__payqr {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+
+    &-tip {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
   }
 }
 

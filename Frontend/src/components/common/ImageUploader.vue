@@ -5,8 +5,8 @@ import { Picture, Close } from '@element-plus/icons-vue'
 import { uploadImage } from '@/api/upload'
 
 const props = withDefaults(
-  defineProps<{ modelValue?: string; maxSize?: number }>(),
-  { maxSize: 10 * 1024 * 1024 },
+  defineProps<{ modelValue?: string; maxSize?: number; scene?: 'message' | 'avatar' | 'payQr' }>(),
+  { maxSize: 10 * 1024 * 1024, scene: 'message' },
 )
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
@@ -39,7 +39,7 @@ async function onFileChange(e: Event) {
   }
   uploading.value = true
   try {
-    const url = await uploadImage(file)
+    const url = await uploadImage(file, props.scene)
     emit('update:modelValue', url)
   } catch (err) {
     ElMessage.error((err as Error).message || '上传失败')

@@ -13,6 +13,8 @@ export interface Order {
   buyerName: string
   sellerId: number
   sellerName: string
+  /** 卖家收款二维码 URL（下单后买家扫码转账，未设置则空） */
+  sellerPayQr?: string
   amount: number
   tradeType: TradeType
   shipType: ShipType

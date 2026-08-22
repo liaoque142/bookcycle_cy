@@ -22,6 +22,7 @@
         <result property="seller" column="seller"/>
         <result property="sellerAvatar" column="sellerAvatar"/>
         <result property="credit" column="credit"/>
+        <result property="favorited" column="favorited" javaType="Boolean"/>
         <result property="createdAt" column="create_time" javaType="java.time.LocalDateTime"/>
     </resultMap>
 
@@ -45,6 +46,22 @@
     <select id="selectById" resultMap="BookVOMap">
         <include refid="bookVoColumns"/>
         WHERE b.id = #{id} AND b.deleted = 0
+    </select>
+
+    <!-- 详情（含当前用户收藏标记）：复用 bookVoColumns 包装子查询，favorited 游客传 null 恒 false -->
+    <select id="selectDetailVO" resultMap="BookVOMap">
+        SELECT t.*,
+               (SELECT COUNT(*) FROM favorite f
+                 WHERE f.book_id = t.id AND f.user_id = #{currentUserId}) &gt; 0 AS favorited
+        FROM ( <include refid="bookVoColumns"/> WHERE b.id = #{id} AND b.deleted = 0 ) t
+    </select>
+
+    <!-- 某用户收藏的书籍分页（我的收藏 / 好友收藏共用），按收藏时间倒序 -->
+    <select id="selectFavoritesByUser" resultMap="BookVOMap">
+        <include refid="bookVoColumns"/>
+        JOIN favorite fav ON fav.book_id = b.id AND fav.user_id = #{userId}
+        WHERE b.deleted = 0
+        ORDER BY fav.create_time DESC
     </select>
 
     <select id="selectPage" resultMap="BookVOMap">

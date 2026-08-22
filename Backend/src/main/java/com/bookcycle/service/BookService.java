@@ -43,7 +43,7 @@ public class BookService {
         book.setDescription(trimToNull(req.getDescription()));
         book.setStatus(1);
         bookMapper.insert(book);
-        return detail(book.getId());
+        return detail(book.getId(), null);
     }
 
     public PageResult<BookVO> list(String keyword, Long categoryId, Integer tradeType, Integer condition,
@@ -70,8 +70,9 @@ public class BookService {
         return list(null, null, null, null, "latest", 1, size).getList();
     }
 
-    public BookVO detail(Long id) {
-        BookVO vo = bookMapper.selectById(id);
+    /** 书籍详情（含当前用户收藏标记 favorited；游客 currentUserId 传 null） */
+    public BookVO detail(Long id, Long currentUserId) {
+        BookVO vo = bookMapper.selectDetailVO(id, currentUserId);
         if (vo == null) {
             throw new BusinessException("书籍不存在");
         }
