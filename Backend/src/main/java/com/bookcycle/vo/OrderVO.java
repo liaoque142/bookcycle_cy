@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 /**
  * 交易订单展示 VO（联表：书 / 买卖双方 / 地址 / 支付，枚举码映射中文）。
- * 注意：禁止 Lombok @Builder（全参构造器会触发列顺序构造器自动映射，见 PROGRESS.md 踩坑）。
+ * 注意：禁止 Lombok @Builder（全参构造器会触发列顺序构造器自动映射，见 DECISIONS.md「MyBatis 映射的 VO 类禁用 Lombok @Builder」）。
  */
 @Data
 public class OrderVO {

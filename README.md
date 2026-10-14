@@ -6,7 +6,7 @@
 
 - **后端**：Java 21 + Spring Boot 3.5.16 + Spring Security（JWT）+ MyBatis XML Mapper + PageHelper + MySQL 8 + springdoc
 - **前端**：Vue 3 + TypeScript + Vite + Element Plus + Pinia + Vue Router
-- 详见 [plan.md](plan.md)（7 阶段需求）与 [PROGRESS.md](PROGRESS.md)（进度与决策记录）
+- 详见 [plan.md](plan.md)（7 阶段需求）、[PROGRESS.md](PROGRESS.md)（当前进度）、[DECISIONS.md](DECISIONS.md)（设计与踩坑决策）
 
 ## 当前可运行功能
 
@@ -109,6 +109,6 @@ curl -s -X POST $B/books -H "Content-Type: application/json" -d '{}'
 - **交换状态机**：独立 `swap` 表（不塞进 trade_order），状态 1 待对方同意 / 2 已同意待发货 / 3 交换中 / 4 已完成 / 5 已取消 / 6 已拒绝；发货/确认用双方 `shipped_at/confirmed_at` 时间戳记录，`markBothShipped`/`markBothConfirmed` 按「状态 + 双方时间戳」条件 CAS 原子推进（幂等防并发）；发起时双书 CAS 在售→已预订，任一步失败事务回滚。
 - **信誉分不设上限**：初始 100，奖励（成功交易 +2、好评 +1）可高于 100，仅钳下限 0（schema 注释 0-100 为参考）；扣减规则在 `credit_rule` 表数据驱动（后台可配置启用）。
 - **解除拉黑恢复好友**：拉黑时 `blacklist.was_friend` 记录当时是否为好友，解除拉黑且对方未反向拉黑时双向恢复好友；非好友被拉黑解除不会误加好友。
-- **图片上传**：评论 / 私信发图走 `POST /api/v1/upload/image`（需登录，jpg/png/gif/webp ≤5MB），落盘 `Backend/uploads/`（gitignore），静态映射 `/uploads/**` 免登录访问；评论/私信支持「纯文字 / 文字+图 / 纯图」，`imageUrl` 服务端校验必须 `/uploads/` 前缀。
+- **图片上传**：评论 / 私信发图走 `POST /api/v1/upload/image`（需登录，`scene` 区分限额：message 10MB / avatar·payQr 5MB；仅 jpg/png，按魔数嗅探真实字节定扩展名），落盘 `Backend/uploads/`（gitignore），静态映射 `/uploads/**` 免登录访问；评论/私信支持「纯文字 / 文字+图 / 纯图」，`imageUrl` 服务端校验必须 `/uploads/` 前缀。
 - **Windows 应用 seed 注意**：`mysql.exe < sql/seed.sql` 需带 `--default-character-set=utf8mb4`，否则中文字段会被按 GBK 双编码入库。
-- 进度、决策与踩坑记录见 [PROGRESS.md](PROGRESS.md)；变更历史见 [CHANGELOG.md](CHANGELOG.md)。
+- 进度见 [PROGRESS.md](PROGRESS.md)；设计与踩坑见 [DECISIONS.md](DECISIONS.md)；变更历史见 `git log --oneline`。
