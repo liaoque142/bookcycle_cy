@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookcycle.mapper.OperationLogMapper">
+
+    <!-- 操作日志分页：联表取操作人用户名 -->
+    <select id="selectPage" resultType="com.bookcycle.vo.OperationLogVO">
+        SELECT ol.id, ol.action, ol.detail, ol.operator_id AS operatorId, ol.create_time,
+               su.username AS operatorName
+        FROM operation_log ol
+        JOIN sys_user su ON ol.operator_id = su.id
+        WHERE 1 = 1
+        <if test="action != null and action != ''">AND ol.action = #{action}</if>
+        <if test="operatorId != null">AND ol.operator_id = #{operatorId}</if>
+        ORDER BY ol.id DESC
+    </select>
+
+</mapper>

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookcycle.mapper.FriendMapper">
+
+    <!-- 用户摘要（搜索/申请通知）显式映射 -->
+    <resultMap id="UserBriefVOMap" type="com.bookcycle.vo.UserBriefVO">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
+        <result property="credit" column="credit"/>
+    </resultMap>
+
+    <resultMap id="FriendVOMap" type="com.bookcycle.vo.FriendVO">
+        <id property="id" column="id"/>
+        <result property="userId" column="userId"/>
+        <result property="username" column="username"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
+        <result property="credit" column="credit"/>
+        <result property="createTime" column="createTime" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <resultMap id="FriendRequestVOMap" type="com.bookcycle.vo.FriendRequestVO">
+        <id property="id" column="id"/>
+        <result property="fromUserId" column="fromUserId"/>
+        <result property="fromUsername" column="fromUsername"/>
+        <result property="fromNickname" column="fromNickname"/>
+        <result property="fromAvatar" column="fromAvatar"/>
+        <result property="fromCredit" column="fromCredit"/>
+        <result property="toUserId" column="toUserId"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="createTime" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <resultMap id="BlacklistVOMap" type="com.bookcycle.vo.BlacklistVO">
+        <id property="id" column="id"/>
+        <result property="userId" column="userId"/>
+        <result property="username" column="username"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
+        <result property="credit" column="credit"/>
+        <result property="createTime" column="createTime" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <!-- 用户摘要基础列 + 联表（昵称缺省回退用户名） -->
+    <sql id="userBriefColumns">
+        u.id, u.username, COALESCE(p.nickname, u.username) AS nickname, p.avatar AS avatar, u.credit
+    </sql>
+
+    <sql id="userBriefJoins">
+        FROM sys_user u
+        LEFT JOIN user_profile p ON p.user_id = u.id AND p.deleted = 0
+    </sql>
+
+    <select id="searchUsers" resultMap="UserBriefVOMap">
+        SELECT <include refid="userBriefColumns"/>
+        <include refid="userBriefJoins"/>
+        WHERE u.deleted = 0 AND u.status = 1 AND u.id != #{currentUserId}
+          AND (u.username LIKE CONCAT('%', #{keyword}, '%')
+               OR COALESCE(p.nickname, u.username) LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY u.id
+        LIMIT 20
+    </select>
+
+    <select id="selectUserBrief" resultMap="UserBriefVOMap">
+        SELECT <include refid="userBriefColumns"/>
+        <include refid="userBriefJoins"/>
+        WHERE u.id = #{id} AND u.deleted = 0 AND u.status = 1
+    </select>
+
+    <select id="selectFriends" resultMap="FriendVOMap">
+        SELECT f.id, f.friend_id AS userId, u.username,
+               COALESCE(p.nickname, u.username) AS nickname, p.avatar AS avatar, u.credit,
+               f.create_time AS createTime
+        FROM friend f
+        JOIN sys_user u ON u.id = f.friend_id AND u.deleted = 0
+        LEFT JOIN user_profile p ON p.user_id = u.id AND p.deleted = 0
+        WHERE f.user_id = #{userId} AND f.status = 1
+        ORDER BY f.create_time DESC
+    </select>
+
+    <select id="countFriend" resultType="int">
+        SELECT COUNT(*) FROM friend
+        WHERE status = 1
+          AND ((user_id = #{a} AND friend_id = #{b}) OR (user_id = #{b} AND friend_id = #{a}))
+    </select>
+
+    <select id="countPendingRequest" resultType="int">
+        SELECT COUNT(*) FROM friend_request
+        WHERE from_user_id = #{from} AND to_user_id = #{to} AND status = 0
+    </select>
+
+    <select id="selectRequests" resultMap="FriendRequestVOMap">
+        SELECT r.id, r.from_user_id AS fromUserId, r.to_user_id AS toUserId, r.status,
+               r.create_time AS createTime, u.username AS fromUsername,
+               COALESCE(p.nickname, u.username) AS fromNickname, p.avatar AS fromAvatar, u.credit AS fromCredit
+        FROM friend_request r
+        JOIN sys_user u ON u.id = r.from_user_id AND u.deleted = 0
+        LEFT JOIN user_profile p ON p.user_id = u.id AND p.deleted = 0
+        WHERE r.to_user_id = #{toUserId}
+        ORDER BY r.create_time DESC
+    </select>
+
+    <insert id="upsertFriend">
+        INSERT INTO friend (user_id, friend_id, status) VALUES (#{userId}, #{friendId}, 1)
+        ON DUPLICATE KEY UPDATE status = 1
+    </insert>
+
+    <update id="deleteFriendPair">
+        UPDATE friend SET status = 0
+        WHERE (user_id = #{a} AND friend_id = #{b}) OR (user_id = #{b} AND friend_id = #{a})
+    </update>
+
+    <select id="countBlack" resultType="int">
+        SELECT COUNT(*) FROM blacklist WHERE user_id = #{userId} AND black_user_id = #{blackUserId}
+    </select>
+
+    <select id="countBlackBetween" resultType="int">
+        SELECT COUNT(*) FROM blacklist
+        WHERE (user_id = #{a} AND black_user_id = #{b}) OR (user_id = #{b} AND black_user_id = #{a})
+    </select>
+
+    <select id="selectBlacklist" resultMap="BlacklistVOMap">
+        SELECT b.id, b.black_user_id AS userId, u.username,
+               COALESCE(p.nickname, u.username) AS nickname, p.avatar AS avatar, u.credit,
+               b.create_time AS createTime
+        FROM blacklist b
+        JOIN sys_user u ON u.id = b.black_user_id AND u.deleted = 0
+        LEFT JOIN user_profile p ON p.user_id = u.id AND p.deleted = 0
+        WHERE b.user_id = #{userId}
+        ORDER BY b.create_time DESC
+    </select>
+</mapper>

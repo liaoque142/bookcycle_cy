@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookcycle.mapper.EvaluationMapper">
+
+    <!-- 评价列表：联表取评价方昵称（缺省回退 username） -->
+    <select id="selectByOrderId" resultType="com.bookcycle.vo.EvaluationVO">
+        SELECT e.id, e.order_id AS orderId, e.evaluator_id AS evaluatorId,
+               COALESCE(ep.nickname, eu.username) AS evaluatorName,
+               e.target_id AS targetId, e.score, e.content, e.create_time AS createTime
+        FROM trade_evaluation e
+        JOIN sys_user eu ON e.evaluator_id = eu.id AND eu.deleted = 0
+        LEFT JOIN user_profile ep ON eu.id = ep.user_id AND ep.deleted = 0
+        WHERE e.order_id = #{orderId}
+        ORDER BY e.create_time DESC
+    </select>
+</mapper>

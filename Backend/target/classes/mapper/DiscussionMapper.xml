@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookcycle.mapper.DiscussionMapper">
+
+    <resultMap id="DiscussionVOMap" type="com.bookcycle.vo.DiscussionVO">
+        <id property="id" column="id"/>
+        <result property="bookId" column="bookId"/>
+        <result property="userId" column="userId"/>
+        <result property="author" column="author"/>
+        <result property="authorAvatar" column="authorAvatar"/>
+        <result property="content" column="content"/>
+        <result property="imageUrl" column="imageUrl"/>
+        <result property="parentId" column="parentId"/>
+        <result property="createTime" column="createTime" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <!-- 顶级讨论：时间倒序 -->
+    <select id="selectTop" resultMap="DiscussionVOMap">
+        SELECT d.id, d.book_id AS bookId, d.user_id AS userId,
+               COALESCE(up.nickname, su.username) AS author, up.avatar AS authorAvatar, d.content, d.image_url AS imageUrl,
+               d.parent_id AS parentId, d.create_time AS createTime
+        FROM book_discussion d
+        JOIN sys_user su ON d.user_id = su.id AND su.deleted = 0
+        LEFT JOIN user_profile up ON su.id = up.user_id AND up.deleted = 0
+        WHERE d.book_id = #{bookId} AND d.deleted = 0 AND d.parent_id IS NULL
+        ORDER BY d.create_time DESC
+    </select>
+
+    <!-- 全部子回复：时间正序，Service 端按 parentId 组装到顶级下 -->
+    <select id="selectReplies" resultMap="DiscussionVOMap">
+        SELECT d.id, d.book_id AS bookId, d.user_id AS userId,
+               COALESCE(up.nickname, su.username) AS author, up.avatar AS authorAvatar, d.content, d.image_url AS imageUrl,
+               d.parent_id AS parentId, d.create_time AS createTime
+        FROM book_discussion d
+        JOIN sys_user su ON d.user_id = su.id AND su.deleted = 0
+        LEFT JOIN user_profile up ON su.id = up.user_id AND up.deleted = 0
+        WHERE d.book_id = #{bookId} AND d.deleted = 0 AND d.parent_id IS NOT NULL
+        ORDER BY d.create_time ASC
+    </select>
+</mapper>
