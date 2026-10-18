@@ -1,0 +1,1 @@
+import{n as e,t}from"./mock-BBpqBQnT.js";var n=[{changeValue:2,reason:`成功交易`,createTime:`2026-08-16 12:00:00`},{changeValue:1,reason:`获得好评`,createTime:`2026-08-16 12:05:00`}];async function r(){return await t(100),100}async function i(r=1,i=20){return await t(150),e(n,r,i)}export{r as n,i as t};

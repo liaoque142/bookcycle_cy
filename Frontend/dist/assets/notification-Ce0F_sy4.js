@@ -1,0 +1,1 @@
+import{n as e,t}from"./mock-BBpqBQnT.js";async function n(n={}){return await t(120),e([],n.page,n.size)}async function r(){return await t(60),0}async function i(e){await t(60)}async function a(){await t(60)}export{i,r as n,a as r,n as t};
